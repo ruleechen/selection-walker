@@ -1,0 +1,17 @@
+{
+  "name": "selection-walker",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "repository": "https://github.com/ruleechen/selection-walker.git",
+  "author": "Rulee Chen <rulee@live.cn>",
+  "scripts": {
+    "prepublish": "webpack",
+    "build": "webpack"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^6.6.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9"
+  }
+}
