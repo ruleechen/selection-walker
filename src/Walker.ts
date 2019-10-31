@@ -1,12 +1,13 @@
 import RuleBase from './RuleBase';
 import WidgetBase from './WidgetBase';
-import SelectionBlock from './SelectionBlock';
+import { ISelectionBlock } from './interfaces';
 
 class Walker {
-  _container: Node;
+  _container: HTMLElement;
   _widget: WidgetBase;
+  _widgetRoot: HTMLElement;
   _rule: RuleBase;
-  _blocks: { [key: string]: [ClientRect, SelectionBlock] };
+  _blocks: { [key: string]: [ClientRect, ISelectionBlock] };
 
   constructor({ container, widget, rule }) {
     this._container = container;
@@ -21,8 +22,19 @@ class Walker {
   }
 
   _init() {
+    this._renderWidget();
     const items = this._rule.init(this._container);
     this._appendBlocks(items);
+  }
+
+  _renderWidget() {
+    if (this._widget) {
+      this._widgetRoot = document.createElement('div');
+      document.body.appendChild(this._widgetRoot);
+      this._widgetRoot.style.position = 'absolute';
+      this._widgetRoot.style.display = 'none';
+      this._widget.render(this._widgetRoot);
+    }
   }
 
   _processRules(mutations: MutationRecord[]) {
@@ -40,47 +52,60 @@ class Walker {
       subtree: false
     });
     let lastRect;
+    const selection = window.getSelection();
     this._container.addEventListener('mousemove', (ev: MouseEvent) => {
-      Object.keys(this._blocks).forEach(key => {
-        const rect = this._blocks[key][0];
-        const block = this._blocks[key][1];
+      const keys = Object.keys(this._blocks);
+      for (let i = 0; i < keys.length; i++) {
+        const item = this._blocks[keys[i]];
+        const rect = item[0];
         if (
-          (!lastRect || lastRect !== rect) &&
           rect.left <= ev.x &&
           ev.x <= rect.right &&
           rect.top <= ev.y &&
           ev.y <= rect.bottom
         ) {
-          lastRect = rect;
-          const selection=window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(block.toRange());
-          console.log('matched');
+          if (!lastRect || lastRect !== rect) {
+            lastRect = rect;
+            const block = item[1];
+            if (block.startsNode.tagName !== 'INPUT') {
+              const range = document.createRange();
+              range.setStart(block.startsNode, block.startsAt);
+              range.setEnd(block.endsNode, block.endsAt);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+            this._widgetRoot.style.display = 'block';
+            this._widgetRoot.style.top = rect.top + 'px';
+            this._widgetRoot.style.left = rect.right + 5 + 'px';
+            break;
+          }
+        } else {
+          lastRect = null;
+          this._widgetRoot.style.display = 'none';
         }
-      });
+      }
     });
   }
 
-  _appendBlocks(blocks: SelectionBlock[]) {
+  _appendBlocks(blocks: ISelectionBlock[]) {
     if (!blocks || !blocks.length) {
       return;
     }
-    let cachedRange: Range = null;
-    const selection = window.getSelection();
-    if (selection.anchorNode) {
-      cachedRange = selection.getRangeAt(0);
-    }
     blocks.forEach(block => {
-      const range = block.toRange();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      const rect = range.getBoundingClientRect();
-      this._blocks[block.key()] = [rect, block];
+      if (!block.startsNode) {
+        return;
+      }
+      let rect: ClientRect;
+      if (block.startsNode.tagName === 'INPUT') {
+        rect = block.startsNode.getBoundingClientRect();
+      } else {
+        const range = document.createRange();
+        range.setStart(block.startsNode, block.startsAt);
+        range.setEnd(block.endsNode, block.endsAt);
+        rect = range.getBoundingClientRect();
+      }
+      this._blocks[Math.random()] = [rect, block];
     });
-    selection.removeAllRanges();
-    if (cachedRange) {
-      selection.addRange(cachedRange);
-    }
   }
 }
 

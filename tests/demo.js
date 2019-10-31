@@ -1,47 +1,74 @@
+function processNode(node) {
+  if (node.tagName === 'INPUT') {
+    const numbers = libphonenumber.findNumbers(node.value, {
+      v2: true
+    });
+    return numbers.map(item => {
+      return {
+        startsNode: node,
+        startsAt: item.startsAt,
+        endsNode: node,
+        endsAt: item.endsAt,
+        number: item.number
+      };
+    });
+  }
+  if (
+    node.tagName === 'A' &&
+    (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'))
+  ) {
+    return [
+      {
+        startsNode: node.firstChild,
+        startsAt: 0,
+        endsNode: node.firstChild,
+        endsAt: node.innerText.length,
+        number: null
+      }
+    ];
+  }
+  if (node.nodeType === 3) {
+    const text = node.textContent.trim();
+    const numbers = libphonenumber.findNumbers(text, {
+      v2: true
+    });
+    return numbers.map(item => {
+      return {
+        startsNode: node,
+        startsAt: item.startsAt,
+        endsNode: node,
+        endsAt: item.endsAt,
+        number: item.number
+      };
+    });
+  }
+  return null;
+}
+
 class MyRule extends selectionWalker.RuleBase {
   init(container) {
-    const items = [];
     const walker = document.createTreeWalker(
       container,
       NodeFilter.SHOW_ALL,
       null
     );
-    var node = walker.nextNode();
+    let founds = [];
+    let node = walker.nextNode();
     while (node) {
-      if (node.nodeType === 3) {
-        const text = node.textContent.trim();
-        if (text) {
-          const keyword = 'to';
-          const index = text.indexOf(keyword);
-          if (index !== -1) {
-            const start = new selectionWalker.SelectionPoint({
-              el: node,
-              offset: index
-            });
-            const end = new selectionWalker.SelectionPoint({
-              el: node,
-              offset: index + keyword.length
-            });
-            items.push(
-              new selectionWalker.SelectionBlock({
-                start,
-                end,
-                key: Math.random().toString()
-              })
-            );
-          }
-        }
+      const res = processNode(node);
+      if (res && res.length) {
+        founds = founds.concat(res);
       }
       node = walker.nextNode();
     }
-    return items;
+    return founds;
   }
   apply(mutations) {}
 }
 
 class MyWidget extends selectionWalker.WidgetBase {
   render(root) {
-    console.log('render my widget');
+    root.innerHTML = '<div style="border:1px solid #ccc">I am menu</div>';
   }
 }
 
@@ -52,4 +79,5 @@ window.addEventListener('load', () => {
     rule: new MyRule()
   });
   walker.start();
+  window.swalker = walker;
 });

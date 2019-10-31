@@ -1,12 +1,12 @@
-import SelectionBlock from './SelectionBlock';
+import { ISelectionBlock } from './interfaces';
 
 class RuleBase {
-  init(container: Node): SelectionBlock[] {
+  init(container: HTMLElement): ISelectionBlock[] {
     console.log(container);
     return null;
   }
 
-  apply(mutations: MutationRecord[]): SelectionBlock[] {
+  apply(mutations: MutationRecord[]): ISelectionBlock[] {
     console.log(mutations);
     return null;
   }

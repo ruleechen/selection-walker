@@ -1,5 +1,5 @@
 class WidgetBase {
-  render(root: Node): any {}
+  render(root: HTMLElement): any {}
 }
 
 export default WidgetBase;
