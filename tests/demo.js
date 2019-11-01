@@ -45,7 +45,7 @@ function processNode(node) {
   return null;
 }
 
-class MyRule extends selectionWalker.RuleBase {
+class MyRule {
   init(container) {
     const walker = document.createTreeWalker(
       container,
@@ -66,7 +66,7 @@ class MyRule extends selectionWalker.RuleBase {
   apply(mutations) {}
 }
 
-class MyWidget extends selectionWalker.WidgetBase {
+class MyWidget {
   render(root) {
     root.innerHTML = '<div style="border:1px solid #ccc">I am menu</div>';
   }
