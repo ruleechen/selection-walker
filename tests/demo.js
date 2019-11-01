@@ -81,3 +81,15 @@ window.addEventListener('load', () => {
   walker.start();
   window.swalker = walker;
 });
+
+/*
+var p1 = document.querySelector('#p1');
+var p2 = document.querySelector('#p2');
+var range = document.createRange();
+range.setStart(p1.firstChild, 5);
+range.setEnd(p2.firstChild, 5);
+var sele = window.getSelection();
+sele.removeAllRanges();
+sele.addRange(range);
+console.log(range.getBoundingClientRect());
+*/
