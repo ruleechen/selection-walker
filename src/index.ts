@@ -65,13 +65,18 @@ class Walker {
           if (!lastRect || lastRect !== rect) {
             lastRect = rect;
             const block = item[1];
-            if (block.startsNode.tagName !== 'INPUT') {
-              const range = document.createRange();
+
+            const range = document.createRange();
+            if (block.startsNode.tagName === 'INPUT') {
+              range.setStartBefore(block.startsNode);
+              range.setEndAfter(block.endsNode);
+            } else {
               range.setStart(block.startsNode, block.startsAt);
               range.setEnd(block.endsNode, block.endsAt);
-              selection.removeAllRanges();
-              selection.addRange(range);
             }
+            selection.removeAllRanges();
+            selection.addRange(range);
+
             this._widgetRoot.style.display = 'block';
             this._widgetRoot.style.top = rect.top + 'px';
             this._widgetRoot.style.left = rect.right + 5 + 'px';
@@ -93,15 +98,15 @@ class Walker {
       if (!block.startsNode) {
         return;
       }
-      let rect: ClientRect;
+      const range = document.createRange();
       if (block.startsNode.tagName === 'INPUT') {
-        rect = block.startsNode.getBoundingClientRect();
+        range.setStartBefore(block.startsNode);
+        range.setEndAfter(block.endsNode);
       } else {
-        const range = document.createRange();
         range.setStart(block.startsNode, block.startsAt);
         range.setEnd(block.endsNode, block.endsAt);
-        rect = range.getBoundingClientRect();
       }
+      const rect = range.getBoundingClientRect();
       this._blocks[Math.random()] = [rect, block];
     });
   }
