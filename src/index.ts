@@ -1,16 +1,15 @@
-import { ISelectionRule, ISelectionBlock, IWidgetRender } from './interfaces';
+import {
+  ISelectionRule,
+  ISelectionBlock,
+  IWidgetRender,
+  IWalkerParams
+} from './interfaces';
 
 class Walker {
-  _container: HTMLElement;
-  _widget: IWidgetRender;
   _widgetRoot: HTMLElement;
-  _rule: ISelectionRule;
   _blocks: { [key: string]: [ClientRect, ISelectionBlock] };
 
-  constructor({ container, widget, rule }) {
-    this._container = container;
-    this._widget = widget;
-    this._rule = rule;
+  constructor(private props: IWalkerParams) {
     this._blocks = {};
   }
 
@@ -21,22 +20,22 @@ class Walker {
 
   _init() {
     this._renderWidget();
-    const items = this._rule.init(this._container);
+    const items = this.props.rule.init(this.props.container);
     this._appendBlocks(items);
   }
 
   _renderWidget() {
-    if (this._widget) {
+    if (this.props.widget) {
       this._widgetRoot = document.createElement('div');
       document.body.appendChild(this._widgetRoot);
       this._widgetRoot.style.position = 'absolute';
       this._widgetRoot.style.display = 'none';
-      this._widget.render(this._widgetRoot);
+      this.props.widget.render(this._widgetRoot);
     }
   }
 
   _processRules(mutations: MutationRecord[]) {
-    const items = this._rule.apply(mutations);
+    const items = this.props.rule.apply(mutations);
     this._appendBlocks(items);
   }
 
@@ -44,14 +43,14 @@ class Walker {
     const observer = new MutationObserver((mutationsList, observer) => {
       this._processRules(mutationsList);
     });
-    observer.observe(this._container, {
+    observer.observe(this.props.container, {
       attributes: false,
       childList: true,
       subtree: false
     });
     let lastRect;
     const selection = window.getSelection();
-    this._container.addEventListener('mousemove', (ev: MouseEvent) => {
+    this.props.container.addEventListener('mousemove', (ev: MouseEvent) => {
       const keys = Object.keys(this._blocks);
       for (let i = 0; i < keys.length; i++) {
         const item = this._blocks[keys[i]];

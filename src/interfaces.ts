@@ -14,3 +14,9 @@ export interface ISelectionRule {
 export interface IWidgetRender {
   render(root: HTMLElement): any;
 }
+
+export interface IWalkerParams {
+  container: HTMLElement;
+  widget: IWidgetRender;
+  rule: ISelectionRule;
+}
