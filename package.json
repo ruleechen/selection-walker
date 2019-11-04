@@ -1,8 +1,8 @@
 {
-  "name": "selection-walker",
+  "name": "srect",
   "version": "1.0.0",
   "main": "build/index.js",
-  "repository": "https://github.com/ruleechen/selection-walker.git",
+  "repository": "https://github.com/ruleechen/srect.git",
   "author": "Rulee Chen <rulee@live.cn>",
   "scripts": {
     "prepublish": "webpack",

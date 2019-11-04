@@ -73,7 +73,7 @@ class MyWidget {
 }
 
 window.addEventListener('load', () => {
-  const walker = new selectionWalker.Walker({
+  const walker = new srect.Walker({
     container: document.body,
     widget: new MyWidget(),
     rule: new MyRule()

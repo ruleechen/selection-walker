@@ -6,7 +6,7 @@ module.exports = {
   output: {
     filename: 'index.js',
     path: path.resolve(__dirname, 'build'),
-    library: 'selectionWalker',
+    library: 'srect',
     libraryTarget: 'umd',
     libraryExport: 'default'
   },
