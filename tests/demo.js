@@ -49,42 +49,59 @@ function processNode(node) {
   return null;
 }
 
-class MyRule {
-  init(container) {
-    const walker = document.createTreeWalker(
-      container,
-      NodeFilter.SHOW_ALL,
-      function(node) {
-        return isA(node.parentNode)
-          ? NodeFilter.FILTER_SKIP
-          : NodeFilter.FILTER_ACCEPT;
+function myMatcher(container) {
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_ALL,
+    function(node) {
+      if (node.tagName === 'RC-C2D-MENU' || node.tagName === 'SCRIPT') {
+        return NodeFilter.FILTER_SKIP;
       }
-    );
-    let founds = [];
-    let node = walker.nextNode();
-    while (node) {
-      const res = processNode(node);
-      if (res && res.length) {
-        founds = founds.concat(res);
-      }
-      node = walker.nextNode();
+      return isA(node.parentNode)
+        ? NodeFilter.FILTER_SKIP
+        : NodeFilter.FILTER_ACCEPT;
     }
-    return founds;
+  );
+  let founds = [];
+  let node = walker.nextNode();
+  while (node) {
+    const res = processNode(node);
+    if (res && res.length) {
+      founds = founds.concat(res);
+    }
+    node = walker.nextNode();
   }
-  apply(mutations) {}
-}
-
-class MyWidget {
-  render(root) {
-    root.innerHTML = '<div style="border:1px solid #ccc">I am menu</div>';
-  }
+  return founds;
 }
 
 window.addEventListener('load', function() {
+  const widgetRoot = document.createElement('RC-C2D-MENU');
+  document.body.appendChild(widgetRoot);
+  widgetRoot.innerHTML = '<div style="border:1px solid #ccc">I am menu</div>';
+  widgetRoot.style.position = 'absolute';
+  widgetRoot.style.display = 'none';
+
+  const myHover = function(match) {
+    if (match) {
+      // display
+      widgetRoot.style.display = 'block';
+      widgetRoot.style.top = match.rect.top + 'px';
+      widgetRoot.style.left = match.rect.right + 5 + 'px';
+      // select
+      const selection = window.getSelection();
+      const range = srect.Walker.createRange(match);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } else {
+      // hide
+      widgetRoot.style.display = 'none';
+    }
+  };
+
   const walker = new srect.Walker({
     container: document.body,
-    widget: new MyWidget(),
-    rule: new MyRule()
+    matcher: myMatcher,
+    hover: myHover
   });
   walker.start();
   window.swalker = walker;

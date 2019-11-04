@@ -1,22 +1,22 @@
-export interface ISelectionBlock {
-  startsNode: HTMLElement;
+export interface IMatch {
+  startsNode: Element;
   startsAt: number;
-  endsNode: HTMLElement;
+  endsNode: Element;
   endsAt: number;
+  rect: ClientRect;
   number: any;
 }
 
-export interface ISelectionRule {
-  init(container: HTMLElement): ISelectionBlock[];
-  apply(mutations: MutationRecord[]): ISelectionBlock[];
+export interface IMatcher {
+  (node: Node): IMatch[];
 }
 
-export interface IWidgetRender {
-  render(root: HTMLElement): any;
+export interface IListener {
+  (match: IMatch): void;
 }
 
 export interface IWalkerParams {
-  container: HTMLElement;
-  widget: IWidgetRender;
-  rule: ISelectionRule;
+  container: Node;
+  matcher: IMatcher;
+  hover: IListener;
 }
