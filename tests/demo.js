@@ -1,9 +1,16 @@
+function isA(node) {
+  return (
+    node.tagName === 'A' &&
+    (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'))
+  );
+}
+
 function processNode(node) {
   if (node.tagName === 'INPUT') {
     const numbers = libphonenumber.findNumbers(node.value, {
       v2: true
     });
-    return numbers.map(item => {
+    return numbers.map(function(item) {
       return {
         startsNode: node,
         startsAt: item.startsAt,
@@ -13,10 +20,7 @@ function processNode(node) {
       };
     });
   }
-  if (
-    node.tagName === 'A' &&
-    (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'))
-  ) {
+  if (isA(node)) {
     return [
       {
         startsNode: node.firstChild,
@@ -32,7 +36,7 @@ function processNode(node) {
     const numbers = libphonenumber.findNumbers(text, {
       v2: true
     });
-    return numbers.map(item => {
+    return numbers.map(function(item) {
       return {
         startsNode: node,
         startsAt: item.startsAt,
@@ -50,7 +54,11 @@ class MyRule {
     const walker = document.createTreeWalker(
       container,
       NodeFilter.SHOW_ALL,
-      null
+      function(node) {
+        return isA(node.parentNode)
+          ? NodeFilter.FILTER_SKIP
+          : NodeFilter.FILTER_ACCEPT;
+      }
     );
     let founds = [];
     let node = walker.nextNode();
@@ -72,7 +80,7 @@ class MyWidget {
   }
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('load', function() {
   const walker = new srect.Walker({
     container: document.body,
     widget: new MyWidget(),
