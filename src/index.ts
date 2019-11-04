@@ -2,54 +2,6 @@ import { IMatch, IWalkerParams } from './interfaces';
 import DataManager from './DataManager';
 
 class Walker {
-  _matchesMgr: DataManager = new DataManager();
-  _mouseenterHandler;
-  _mouseleaveHandler;
-  _mousemoveHandler;
-  _lastMatch: IMatch;
-
-  constructor(private props: IWalkerParams) {
-    const me = this;
-    this._mouseenterHandler = function() {
-      const node = this as Element;
-      me._buildRect(node);
-    };
-    this._mouseleaveHandler = function() {
-      const node = this as Element;
-      me._hideMatched(node);
-    };
-    this._mousemoveHandler = function(ev: MouseEvent) {
-      const node = this as Element;
-      me._matchRect(node, ev);
-    };
-  }
-
-  start() {
-    this._observe(this.props.container);
-    this._initMatches(this.props.container);
-  }
-
-  _initMatches(node: Node) {
-    const items = this.props.matcher(node);
-    items.forEach(item => {
-      const node =
-        item.startsNode.nodeType === 3
-          ? (item.startsNode.parentNode as Element)
-          : (item.startsNode as Element);
-      // cache matches
-      const matches = this._matchesMgr.get<IMatch[]>(node, []);
-      matches.push(item);
-      this._matchesMgr.set(node, matches);
-      // attach events
-      node.removeEventListener('mouseenter', this._mouseenterHandler);
-      node.removeEventListener('mouseleave', this._mouseleaveHandler);
-      node.removeEventListener('mousemove', this._mousemoveHandler);
-      node.addEventListener('mouseenter', this._mouseenterHandler);
-      node.addEventListener('mouseleave', this._mouseleaveHandler);
-      node.addEventListener('mousemove', this._mousemoveHandler);
-    });
-  }
-
   static createRange(match: IMatch): Range {
     const range = document.createRange();
     if (match.startsNode.tagName === 'INPUT') {
@@ -62,7 +14,65 @@ class Walker {
     return range;
   }
 
-  _buildRect(node: Element) {
+  private _observer: MutationObserver;
+  private _matchesMgr: DataManager = new DataManager();
+  private _mouseenterHandler: EventListener;
+  private _mouseleaveHandler: EventListener;
+  private _mousemoveHandler: EventListener;
+  private _lastMatch: IMatch;
+
+  constructor(private props: IWalkerParams) {
+    const me = this;
+    this._mouseenterHandler = function() {
+      const node = this as Element;
+      me.buildRect(node);
+    };
+    this._mouseleaveHandler = function() {
+      const node = this as Element;
+      me.hideMatched(node);
+    };
+    this._mousemoveHandler = function(ev: MouseEvent) {
+      const node = this as Element;
+      me.matchRect(node, ev);
+    };
+  }
+
+  start() {
+    this.observe(this.props.container);
+    this.initMatches(this.props.container);
+  }
+
+  private initMatches(node: Node) {
+    const matches = this.props.matcher(node);
+    matches.forEach(match => {
+      const node = this.getEventNode(match);
+      // cache matches
+      const matches = this._matchesMgr.get<IMatch[]>(node, []);
+      matches.push(match);
+      this._matchesMgr.set(node, matches);
+      // attach events
+      this.removeEvents(node);
+      node.addEventListener('mouseenter', this._mouseenterHandler);
+      node.addEventListener('mouseleave', this._mouseleaveHandler);
+      node.addEventListener('mousemove', this._mousemoveHandler);
+    });
+  }
+
+  private getEventNode(match: IMatch) {
+    const node =
+      match.startsNode.nodeType === 3
+        ? (match.startsNode.parentNode as Element)
+        : (match.startsNode as Element);
+    return node;
+  }
+
+  private removeEvents(node: Element) {
+    node.removeEventListener('mouseenter', this._mouseenterHandler);
+    node.removeEventListener('mouseleave', this._mouseleaveHandler);
+    node.removeEventListener('mousemove', this._mousemoveHandler);
+  }
+
+  private buildRect(node: Element) {
     const matches = this._matchesMgr.get<IMatch[]>(node);
     if (matches) {
       matches.forEach(match => {
@@ -72,7 +82,7 @@ class Walker {
     }
   }
 
-  _matchRect(node: Element, ev: MouseEvent) {
+  private matchRect(node: Element, ev: MouseEvent) {
     const matches = this._matchesMgr.get<IMatch[]>(node);
     if (matches) {
       for (const match of matches) {
@@ -95,28 +105,39 @@ class Walker {
     }
   }
 
-  _hideMatched(node: Element) {
+  private hideMatched(node: Element) {
     if (this._lastMatch) {
       this._lastMatch = null;
       this.props.hover(null);
     }
   }
 
-  _observe(node: Node) {
-    const observer = new MutationObserver((mutationsList, observer) => {
+  private observe(node: Node) {
+    this._observer = new MutationObserver((mutationsList, observer) => {
       mutationsList.forEach(mutations => {
         // mutations.addedNodes
         // ...
       });
     });
-    observer.observe(node, {
+    this._observer.observe(node, {
       attributes: false,
       childList: true,
       subtree: false
     });
   }
 
-  destroy() {}
+  destroy() {
+    this._observer.disconnect();
+    this._matchesMgr.keys().forEach(key => {
+      const matches = this._matchesMgr.get<IMatch[]>(key);
+      if (matches) {
+        matches.forEach(match => {
+          const node = this.getEventNode(match);
+          this.removeEvents(node);
+        });
+      }
+    });
+  }
 }
 
 export default { Walker };
