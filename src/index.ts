@@ -17,6 +17,14 @@ class Walker {
     return range;
   }
 
+  static getEventNode(match: IMatch) {
+    const node =
+      match.startsNode instanceof Element
+        ? (match.startsNode as Element)
+        : (match.startsNode.parentNode as Element);
+    return node;
+  }
+
   private _observer: MutationObserver;
   private _matchesMgr: DataManager = new DataManager();
   private _mouseenterHandler: EventListener;
@@ -48,7 +56,7 @@ class Walker {
   private initMatches(node: Node) {
     const matches = this.props.matcher(node);
     matches.forEach(match => {
-      const node = this.getEventNode(match);
+      const node = Walker.getEventNode(match);
       // cache matches
       const matches = this._matchesMgr.get<IMatch[]>(node, []);
       matches.push(match);
@@ -59,14 +67,6 @@ class Walker {
       node.addEventListener('mouseleave', this._mouseleaveHandler);
       node.addEventListener('mousemove', this._mousemoveHandler);
     });
-  }
-
-  private getEventNode(match: IMatch) {
-    const node =
-      match.startsNode.nodeType === 3
-        ? (match.startsNode.parentNode as Element)
-        : (match.startsNode as Element);
-    return node;
   }
 
   private removeEvents(node: Element) {
@@ -97,14 +97,17 @@ class Walker {
         );
       });
       if (match) {
-        if (!this._lastMatch || this._lastMatch !== match) {
-          this._lastMatch = match;
-          this.props.hover(match);
-        }
+        this.showMatched(match);
       } else {
-        this._lastMatch = null;
-        this.props.hover(null);
+        this.hideMatched(node);
       }
+    }
+  }
+
+  private showMatched(match: IMatch) {
+    if (!this._lastMatch || this._lastMatch !== match) {
+      this._lastMatch = match;
+      this.props.hover(match);
     }
   }
 
@@ -124,8 +127,9 @@ class Walker {
     });
     this._observer.observe(node, {
       attributes: false,
+      characterData: true,
       childList: true,
-      subtree: false
+      subtree: true
     });
   }
 
@@ -135,7 +139,7 @@ class Walker {
       const matches = this._matchesMgr.get<IMatch[]>(key);
       if (matches) {
         matches.forEach(match => {
-          const node = this.getEventNode(match);
+          const node = Walker.getEventNode(match);
           this.removeEvents(node);
         });
       }
