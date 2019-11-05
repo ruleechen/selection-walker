@@ -80,6 +80,7 @@ window.addEventListener('load', function() {
   widgetRoot.innerHTML = '<div style="border:1px solid #ccc">I am menu</div>';
   widgetRoot.style.position = 'absolute';
   widgetRoot.style.display = 'none';
+  widgetRoot.style.zIndex = 10000;
 
   const myHover = function(match) {
     if (match) {

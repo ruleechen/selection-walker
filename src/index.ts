@@ -85,22 +85,22 @@ class Walker {
   private matchRect(node: Element, ev: MouseEvent) {
     const matches = this._matchesMgr.get<IMatch[]>(node);
     if (matches) {
-      for (const match of matches) {
-        if (
-          match.rect.left <= ev.x &&
-          ev.x <= match.rect.right &&
-          match.rect.top <= ev.y &&
-          ev.y <= match.rect.bottom
-        ) {
-          if (!this._lastMatch || this._lastMatch !== match) {
-            this._lastMatch = match;
-            this.props.hover(match);
-            break;
-          }
-        } else {
-          this._lastMatch = null;
-          this.props.hover(null);
+      const match = matches.find(m => {
+        return (
+          m.rect.left <= ev.x &&
+          ev.x <= m.rect.right &&
+          m.rect.top <= ev.y &&
+          ev.y <= m.rect.bottom
+        );
+      });
+      if (match) {
+        if (!this._lastMatch || this._lastMatch !== match) {
+          this._lastMatch = match;
+          this.props.hover(match);
         }
+      } else {
+        this._lastMatch = null;
+        this.props.hover(null);
       }
     }
   }
