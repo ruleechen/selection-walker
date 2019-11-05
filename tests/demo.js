@@ -77,7 +77,8 @@ function myMatcher(container) {
 window.addEventListener('load', function() {
   const widgetRoot = document.createElement('RC-C2D-MENU');
   document.body.appendChild(widgetRoot);
-  widgetRoot.innerHTML = '<div style="border:1px solid #ccc; background:#eee;">I am menu</div>';
+  widgetRoot.innerHTML =
+    '<div style="border:1px solid #ccc; background:#eee;">I am menu</div>';
   widgetRoot.style.position = 'absolute';
   widgetRoot.style.display = 'none';
   widgetRoot.style.zIndex = 10000;
@@ -90,7 +91,7 @@ window.addEventListener('load', function() {
       widgetRoot.style.left = match.rect.right + 5 + 'px';
       // select
       const selection = window.getSelection();
-      const range = srect.Walker.createRange(match);
+      const range = srect.MatchWalker.createRange(match);
       selection.removeAllRanges();
       selection.addRange(range);
     } else {
@@ -99,13 +100,13 @@ window.addEventListener('load', function() {
     }
   };
 
-  const walker = new srect.Walker({
+  const walker = new srect.MatchWalker({
     container: document.body,
     matcher: myMatcher,
     hover: myHover
   });
   walker.start();
-  window.swalker = walker;
+  window.mWalker = walker;
 });
 
 /*
