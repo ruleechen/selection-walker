@@ -1,15 +1,4 @@
-const AttrName = 'rcid';
-
-let incrementingId = 0;
-
-function getRcId(el: Element, createNew: boolean): string {
-  let rcid = el.getAttribute(AttrName);
-  if (!rcid && createNew === true) {
-    rcid = (incrementingId++).toString();
-    el.setAttribute(AttrName, rcid);
-  }
-  return rcid;
-}
+import { getRcId } from './utilities';
 
 class DataManager {
   private _store: { [key: string]: any } = {};
@@ -33,5 +22,4 @@ class DataManager {
   }
 }
 
-export { AttrName };
 export default DataManager;

@@ -130,13 +130,12 @@ class MatchWalker {
     this._observer.disconnect();
     this._matchesMgr.keys().forEach(key => {
       const matches = this._matchesMgr.get<IMatch[]>(key);
-      if (matches) {
-        matches.forEach(match => {
-          const node = getEventNode(match.startsNode);
-          this.removeEvents(node);
-        });
+      if (matches && matches.length) {
+        const node = getEventNode(matches[0].startsNode);
+        this.removeEvents(node);
       }
     });
+    this._matchesMgr.clear();
   }
 }
 
