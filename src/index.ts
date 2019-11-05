@@ -4,11 +4,14 @@ import DataManager from './DataManager';
 class Walker {
   static createRange(match: IMatch): Range {
     const range = document.createRange();
-    if (match.startsNode.tagName === 'INPUT') {
+    if (match.startsNode instanceof Element) {
       range.setStartBefore(match.startsNode);
-      range.setEndAfter(match.endsNode);
     } else {
       range.setStart(match.startsNode, match.startsAt);
+    }
+    if (match.endsNode instanceof Element) {
+      range.setEndAfter(match.endsNode);
+    } else {
       range.setEnd(match.endsNode, match.endsAt);
     }
     return range;

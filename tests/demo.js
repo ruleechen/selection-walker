@@ -77,7 +77,7 @@ function myMatcher(container) {
 window.addEventListener('load', function() {
   const widgetRoot = document.createElement('RC-C2D-MENU');
   document.body.appendChild(widgetRoot);
-  widgetRoot.innerHTML = '<div style="border:1px solid #ccc">I am menu</div>';
+  widgetRoot.innerHTML = '<div style="border:1px solid #ccc; background:#eee;">I am menu</div>';
   widgetRoot.style.position = 'absolute';
   widgetRoot.style.display = 'none';
   widgetRoot.style.zIndex = 10000;

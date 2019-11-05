@@ -1,7 +1,7 @@
 export interface IMatch {
-  startsNode: Element;
+  startsNode: Node;
   startsAt: number;
-  endsNode: Element;
+  endsNode: Node;
   endsAt: number;
   rect: ClientRect;
   number: any;
