@@ -1,4 +1,5 @@
 import { IMatch, IWalkerProps } from './interfaces';
+import { getEventNode } from './utilities';
 import DataManager from './DataManager';
 
 class MatchWalker {
@@ -17,14 +18,6 @@ class MatchWalker {
     return range;
   }
 
-  static getEventNode(match: IMatch) {
-    const node =
-      match.startsNode instanceof Element
-        ? (match.startsNode as Element)
-        : (match.startsNode.parentNode as Element);
-    return node;
-  }
-
   private _observer: MutationObserver;
   private _matchesMgr: DataManager = new DataManager();
   private _mouseenterHandler: EventListener;
@@ -39,8 +32,7 @@ class MatchWalker {
       me.buildRect(node);
     };
     this._mouseleaveHandler = function() {
-      const node = this as Element;
-      me.hideMatched(node);
+      me.hideMatched();
     };
     this._mousemoveHandler = function(ev: MouseEvent) {
       const node = this as Element;
@@ -56,7 +48,7 @@ class MatchWalker {
   private initMatches(node: Node) {
     const matches = this.props.matcher(node);
     matches.forEach(match => {
-      const node = MatchWalker.getEventNode(match);
+      const node = getEventNode(match.startsNode);
       // cache matches
       const matches = this._matchesMgr.get<IMatch[]>(node, []);
       matches.push(match);
@@ -69,6 +61,7 @@ class MatchWalker {
     });
   }
 
+  // https://api.jquery.com/mouseenter/
   private removeEvents(node: Element) {
     node.removeEventListener('mouseenter', this._mouseenterHandler);
     node.removeEventListener('mouseleave', this._mouseleaveHandler);
@@ -99,7 +92,7 @@ class MatchWalker {
       if (match) {
         this.showMatched(match);
       } else {
-        this.hideMatched(node);
+        this.hideMatched();
       }
     }
   }
@@ -111,7 +104,7 @@ class MatchWalker {
     }
   }
 
-  private hideMatched(node: Element) {
+  private hideMatched() {
     if (this._lastMatch) {
       this._lastMatch = null;
       this.props.hover(null);
@@ -139,7 +132,7 @@ class MatchWalker {
       const matches = this._matchesMgr.get<IMatch[]>(key);
       if (matches) {
         matches.forEach(match => {
-          const node = MatchWalker.getEventNode(match);
+          const node = getEventNode(match.startsNode);
           this.removeEvents(node);
         });
       }
