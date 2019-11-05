@@ -87,8 +87,8 @@ window.addEventListener('load', function() {
     if (match) {
       // display
       widgetRoot.style.display = 'block';
-      widgetRoot.style.top = match.rect.top + 'px';
-      widgetRoot.style.left = match.rect.right + 5 + 'px';
+      widgetRoot.style.top = match.rect.top + window.pageYOffset + 'px';
+      widgetRoot.style.left = match.rect.right + window.pageXOffset + 5 + 'px';
       // select
       const selection = window.getSelection();
       const range = srect.MatchWalker.createRange(match);

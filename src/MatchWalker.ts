@@ -55,13 +55,17 @@ class MatchWalker {
       this._matchesMgr.set(node, matches);
       // attach events
       this.removeEvents(node);
-      node.addEventListener('mouseenter', this._mouseenterHandler);
-      node.addEventListener('mouseleave', this._mouseleaveHandler);
-      node.addEventListener('mousemove', this._mousemoveHandler);
+      this.addEvents(node);
     });
   }
 
   // https://api.jquery.com/mouseenter/
+  private addEvents(node: Element) {
+    node.addEventListener('mouseenter', this._mouseenterHandler);
+    node.addEventListener('mouseleave', this._mouseleaveHandler);
+    node.addEventListener('mousemove', this._mousemoveHandler);
+  }
+
   private removeEvents(node: Element) {
     node.removeEventListener('mouseenter', this._mouseenterHandler);
     node.removeEventListener('mouseleave', this._mouseleaveHandler);
@@ -132,7 +136,7 @@ class MatchWalker {
       const matches = this._matchesMgr.get<IMatch[]>(key);
       if (matches && matches.length) {
         const node = getEventNode(matches[0].startsNode);
-        this.removeEvents(node);
+        this.removeEvents(node); // strip events
       }
     });
     this._matchesMgr.clear();
