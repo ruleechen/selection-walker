@@ -32,8 +32,7 @@ function processNode(node) {
     ];
   }
   if (node.nodeType === 3) {
-    const text = node.textContent.trim();
-    const numbers = libphonenumber.findNumbers(text, {
+    const numbers = libphonenumber.findNumbers(node.data, {
       v2: true
     });
     return numbers.map(function(item) {

@@ -39,14 +39,17 @@ class MatchWalker {
 
   constructor(private props: IWalkerProps) {
     const me = this;
-    this._mouseenterHandler = function() {
+    this._mouseenterHandler = function(ev: MouseEvent) {
+      ev.cancelBubble = true;
       const node = this as Element;
       me.buildRect(node);
     };
-    this._mouseleaveHandler = function() {
+    this._mouseleaveHandler = function(ev: MouseEvent) {
+      ev.cancelBubble = true;
       me.hideMatched();
     };
     this._mousemoveHandler = function(ev: MouseEvent) {
+      ev.cancelBubble = true;
       const node = this as Element;
       me.matchRect(node, ev);
     };
