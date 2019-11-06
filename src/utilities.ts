@@ -11,17 +11,17 @@ export const getRcId = (function() {
   };
 })();
 
-export function getEventNode(node: Node): Element {
+export function getEventElement(node: Node): Element {
   const element =
     node instanceof Element ? (node as Element) : (node.parentNode as Element);
   return element;
 }
 
-export function isInDom(node: Node) {
+export function isNodeInDom(node: Node): boolean {
   if (!node) {
     return false;
   }
-  const element = getEventNode(node);
+  const element = getEventElement(node);
   if (element) {
     const rect = element.getBoundingClientRect();
     if (rect.top || rect.left || rect.height || rect.width) {

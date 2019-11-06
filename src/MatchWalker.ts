@@ -1,5 +1,5 @@
 import { IMatch, IWalkerProps } from './interfaces';
-import { getEventNode } from './utilities';
+import { getEventElement } from './utilities';
 import DataManager from './DataManager';
 
 class MatchWalker {
@@ -16,6 +16,18 @@ class MatchWalker {
       range.setEnd(match.endsNode, match.endsAt);
     }
     return range;
+  }
+
+  static getEventTarget(match: IMatch): Element {
+    let node: Node;
+    if (match.startsNode === match.endsNode) {
+      node = match.startsNode;
+    } else {
+      const range = MatchWalker.createRange(match);
+      node = range.commonAncestorContainer;
+      range.detach(); // Releases the Range from use to improve performance.
+    }
+    return getEventElement(node);
   }
 
   private _observer: MutationObserver;
@@ -48,7 +60,7 @@ class MatchWalker {
   private initMatches(node: Node) {
     const matches = this.props.matcher(node);
     matches.forEach(match => {
-      const node = getEventNode(match.startsNode);
+      const node = MatchWalker.getEventTarget(match);
       // cache matches
       const matches = this._matchesMgr.get<IMatch[]>(node, []);
       matches.push(match);
@@ -78,6 +90,7 @@ class MatchWalker {
       matches.forEach(match => {
         const range = MatchWalker.createRange(match);
         match.rect = range.getBoundingClientRect();
+        range.detach(); // Releases the Range from use to improve performance.
       });
     }
   }
@@ -135,7 +148,7 @@ class MatchWalker {
     this._matchesMgr.keys().forEach(key => {
       const matches = this._matchesMgr.get<IMatch[]>(key);
       if (matches && matches.length) {
-        const node = getEventNode(matches[0].startsNode);
+        const node = MatchWalker.getEventTarget(matches[0]);
         this.removeEvents(node); // strip events
       }
     });
