@@ -1,6 +1,6 @@
 import { getRcId } from './utilities';
 
-class DataManager {
+class DataSet {
   private _store: { [key: string]: any } = {};
 
   get<T>(key: string | Element, defVal: T = null): T {
@@ -22,4 +22,4 @@ class DataManager {
   }
 }
 
-export default DataManager;
+export default DataSet;

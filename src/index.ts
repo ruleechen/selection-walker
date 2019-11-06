@@ -1,4 +1,4 @@
-import DataManager from './DataManager';
+import DataSet from './DataSet';
 import MatchWalker from './MatchWalker';
 
-export default { DataManager, MatchWalker };
+export default { DataSet, MatchWalker };

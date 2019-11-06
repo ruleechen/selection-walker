@@ -1,6 +1,6 @@
 import { IMatch, IWalkerProps } from './interfaces';
 import { getEventElement } from './utilities';
-import DataManager from './DataManager';
+import DataSet from './DataSet';
 
 class MatchWalker {
   static createRange(match: IMatch): Range {
@@ -31,7 +31,7 @@ class MatchWalker {
   }
 
   private _observer: MutationObserver;
-  private _matchesMgr: DataManager = new DataManager();
+  private _matchesSet: DataSet = new DataSet();
   private _mouseenterHandler: EventListener;
   private _mouseleaveHandler: EventListener;
   private _mousemoveHandler: EventListener;
@@ -65,9 +65,9 @@ class MatchWalker {
     matches.forEach(match => {
       const node = MatchWalker.getEventTarget(match);
       // cache matches
-      const matches = this._matchesMgr.get<IMatch[]>(node, []);
+      const matches = this._matchesSet.get<IMatch[]>(node, []);
       matches.push(match);
-      this._matchesMgr.set(node, matches);
+      this._matchesSet.set(node, matches);
       // attach events
       this.removeEvents(node);
       this.addEvents(node);
@@ -88,7 +88,7 @@ class MatchWalker {
   }
 
   private buildRect(node: Element) {
-    const matches = this._matchesMgr.get<IMatch[]>(node);
+    const matches = this._matchesSet.get<IMatch[]>(node);
     if (matches) {
       matches.forEach(match => {
         const range = MatchWalker.createRange(match);
@@ -99,7 +99,7 @@ class MatchWalker {
   }
 
   private matchRect(node: Element, ev: MouseEvent) {
-    const matches = this._matchesMgr.get<IMatch[]>(node);
+    const matches = this._matchesSet.get<IMatch[]>(node);
     if (matches) {
       const match = matches.find(m => {
         return (
@@ -148,14 +148,14 @@ class MatchWalker {
 
   destroy() {
     this._observer.disconnect();
-    this._matchesMgr.keys().forEach(key => {
-      const matches = this._matchesMgr.get<IMatch[]>(key);
+    this._matchesSet.keys().forEach(key => {
+      const matches = this._matchesSet.get<IMatch[]>(key);
       if (matches && matches.length) {
         const node = MatchWalker.getEventTarget(matches[0]);
         this.removeEvents(node); // strip events
       }
     });
-    this._matchesMgr.clear();
+    this._matchesSet.clear();
   }
 }
 
