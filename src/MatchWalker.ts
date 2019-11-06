@@ -38,6 +38,16 @@ class MatchWalker {
   private _lastMatch: IMatch;
 
   constructor(private props: IWalkerProps) {
+    if (!this.props.container) {
+      throw new Error('Prop [container] is required');
+    }
+    if (!this.props.matcher) {
+      throw new Error('Prop [matcher] is required');
+    }
+    if (!this.props.hover) {
+      throw new Error('Prop [hover] is required');
+    }
+    // event handlers
     const me = this;
     this._mouseenterHandler = function(ev: MouseEvent) {
       ev.cancelBubble = true;

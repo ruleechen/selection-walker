@@ -1,15 +1,19 @@
-export const getRcId = (function() {
-  const AttrName = 'rcid';
+export const nextId = (function() {
   let incrementingId = 0;
-  return function(el: Element, createNew: boolean): string {
-    let rcid = el.getAttribute(AttrName);
-    if (!rcid && createNew === true) {
-      rcid = (incrementingId++).toString();
-      el.setAttribute(AttrName, rcid);
-    }
-    return rcid;
+  return function(): string {
+    return (incrementingId++).toString();
   };
 })();
+
+export function getRcId(el: Element, createNew: boolean): string {
+  const AttrName = 'rcid';
+  let rcId = el.getAttribute(AttrName);
+  if (!rcId && createNew === true) {
+    rcId = nextId();
+    el.setAttribute(AttrName, rcId);
+  }
+  return rcId;
+}
 
 export function getEventElement(node: Node): Element {
   const element =
