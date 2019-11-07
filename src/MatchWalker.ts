@@ -1,5 +1,5 @@
 import { IMatch, IWalkerProps } from './interfaces';
-import { getEventElement } from './utilities';
+import { getEventElement, RcIdAttrName } from './utilities';
 import DataSet from './DataSet';
 
 class MatchWalker {
@@ -38,7 +38,7 @@ class MatchWalker {
   private _lastMatch: IMatch;
 
   constructor(private props: IWalkerProps) {
-    if (!this.props.container) {
+    if (!this.props.root) {
       throw new Error('Prop [container] is required');
     }
     if (!this.props.matcher) {
@@ -66,11 +66,11 @@ class MatchWalker {
   }
 
   start() {
-    this.observe(this.props.container);
-    this.initMatches(this.props.container);
+    this.observe(this.props.root);
+    this.searchMatches(this.props.root);
   }
 
-  private initMatches(node: Node) {
+  searchMatches(node: Node) {
     const matches = this.props.matcher(node);
     matches.forEach(match => {
       const node = MatchWalker.getEventTarget(match);
@@ -81,6 +81,19 @@ class MatchWalker {
       // attach events
       this.removeEvents(node);
       this.addEvents(node);
+    });
+  }
+
+  stripMatches(node: Node) {
+    const element = getEventElement(node);
+    const elements = Array.from(element.querySelectorAll(`[${RcIdAttrName}]`));
+    if (element.getAttribute(RcIdAttrName)) {
+      elements.push(element);
+    }
+    elements.forEach(el => {
+      this.removeEvents(el);
+      this._matchesSet.remove(el);
+      el.removeAttribute(RcIdAttrName);
     });
   }
 
@@ -142,14 +155,34 @@ class MatchWalker {
   }
 
   private observe(node: Node) {
-    this._observer = new MutationObserver((mutationsList, observer) => {
+    this._observer = new MutationObserver(mutationsList => {
       mutationsList.forEach(mutations => {
-        // mutations.addedNodes
-        // ...
+        switch (mutations.type) {
+          case 'characterData':
+            const element = getEventElement(mutations.target);
+            this.searchMatches(element);
+            break;
+
+          case 'attributes':
+            this.searchMatches(mutations.target);
+            break;
+
+          case 'childList':
+            mutations.addedNodes.forEach(node => {
+              this.searchMatches(node);
+            });
+            mutations.removedNodes.forEach(node => {
+              this.stripMatches(node);
+            });
+            break;
+
+          default:
+            break;
+        }
       });
     });
     this._observer.observe(node, {
-      attributes: false,
+      attributes: false, // close this since it's so heavy
       characterData: true,
       childList: true,
       subtree: true
@@ -158,13 +191,7 @@ class MatchWalker {
 
   destroy() {
     this._observer.disconnect();
-    this._matchesSet.keys().forEach(key => {
-      const matches = this._matchesSet.get<IMatch[]>(key);
-      if (matches && matches.length) {
-        const node = MatchWalker.getEventTarget(matches[0]);
-        this.removeEvents(node); // strip events
-      }
-    });
+    this.stripMatches(this.props.root);
     this._matchesSet.clear();
   }
 }

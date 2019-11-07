@@ -5,12 +5,13 @@ export const nextId = (function() {
   };
 })();
 
+export const RcIdAttrName = 'rcid';
+
 export function getRcId(el: Element, createNew: boolean): string {
-  const AttrName = 'rcid';
-  let rcId = el.getAttribute(AttrName);
+  let rcId = el.getAttribute(RcIdAttrName);
   if (!rcId && createNew === true) {
     rcId = nextId();
-    el.setAttribute(AttrName, rcId);
+    el.setAttribute(RcIdAttrName, rcId);
   }
   return rcId;
 }

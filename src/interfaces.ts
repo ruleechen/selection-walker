@@ -16,7 +16,7 @@ export interface IListener {
 }
 
 export interface IWalkerProps {
-  container: Node;
+  root: Node;
   matcher: IMatcher;
   hover: IListener;
 }

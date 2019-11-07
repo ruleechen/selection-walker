@@ -62,7 +62,7 @@ function myMatcher(container) {
     }
   );
   let founds = [];
-  let node = walker.nextNode();
+  let node = walker.currentNode;
   while (node) {
     const res = processNode(node);
     if (res && res.length) {
@@ -100,7 +100,7 @@ window.addEventListener('load', function() {
   };
 
   const walker = new srect.MatchWalker({
-    container: document.body,
+    root: document.body,
     matcher: myMatcher,
     hover: myHover
   });
