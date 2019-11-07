@@ -2,6 +2,8 @@ import { IMatch, IWalkerProps } from './interfaces';
 import { getEventElement, RcIdAttrName } from './utilities';
 import DataSet from './DataSet';
 
+const ParentRcIdPropName = `p${RcIdAttrName}`;
+
 class MatchWalker {
   static createRange(match: IMatch): Range {
     const range = document.createRange();
@@ -71,43 +73,81 @@ class MatchWalker {
   }
 
   searchMatches(node: Node) {
+    if (!node) {
+      throw new Error('[node] is required');
+    }
     const matches = this.props.matcher(node);
     matches.forEach(match => {
       const node = MatchWalker.getEventTarget(match);
       // cache matches
       const matches = this._matchesSet.get<IMatch[]>(node, []);
-      matches.push(match);
+      matches.push(match); // duplicated bug
       this._matchesSet.set(node, matches);
+      // setup link
+      const rcId = node.getAttribute(RcIdAttrName);
+      match.startsNode[ParentRcIdPropName] = rcId;
+      match.endsNode[ParentRcIdPropName] = rcId;
       // attach events
-      this.removeEvents(node);
-      this.addEvents(node);
+      this.removeNodeEvents(node);
+      this.addNodeEvents(node);
     });
   }
 
   stripMatches(node: Node) {
-    const element = getEventElement(node);
-    const elements = Array.from(element.querySelectorAll(`[${RcIdAttrName}]`));
-    if (element.getAttribute(RcIdAttrName)) {
-      elements.push(element);
+    if (!node) {
+      throw new Error('[node] is required');
     }
-    elements.forEach(el => {
-      this.removeEvents(el);
-      this._matchesSet.remove(el);
-      el.removeAttribute(RcIdAttrName);
-    });
+    if (node instanceof Element) {
+      const element = getEventElement(node);
+      const elements = Array.from(
+        element.querySelectorAll(`[${RcIdAttrName}]`)
+      );
+      if (element.getAttribute(RcIdAttrName)) {
+        elements.push(element);
+      }
+      elements.forEach(el => {
+        this.clearNodeMatches(el);
+      });
+    } else {
+      const parentRcId = node[ParentRcIdPropName];
+      if (parentRcId) {
+        const parentNode = document.querySelector(
+          `[${RcIdAttrName}="${parentRcId}"]`
+        );
+        if (parentNode) {
+          let matches = this._matchesSet.get<IMatch[]>(parentNode);
+          if (matches) {
+            matches = matches.filter(m => {
+              return m.startsNode !== node && m.endsNode !== node;
+            });
+            if (matches.length) {
+              this._matchesSet.set(parentNode, matches);
+            } else {
+              this.clearNodeMatches(parentNode);
+            }
+          }
+        }
+      }
+    }
   }
 
   // https://api.jquery.com/mouseenter/
-  private addEvents(node: Element) {
+  private addNodeEvents(node: Element) {
     node.addEventListener('mouseenter', this._mouseenterHandler);
     node.addEventListener('mouseleave', this._mouseleaveHandler);
     node.addEventListener('mousemove', this._mousemoveHandler);
   }
 
-  private removeEvents(node: Element) {
+  private removeNodeEvents(node: Element) {
     node.removeEventListener('mouseenter', this._mouseenterHandler);
     node.removeEventListener('mouseleave', this._mouseleaveHandler);
     node.removeEventListener('mousemove', this._mousemoveHandler);
+  }
+
+  private clearNodeMatches(node: Element) {
+    this.removeNodeEvents(node);
+    this._matchesSet.remove(node);
+    node.removeAttribute(RcIdAttrName);
   }
 
   private buildRect(node: Element) {
@@ -159,20 +199,25 @@ class MatchWalker {
       mutationsList.forEach(mutations => {
         switch (mutations.type) {
           case 'characterData':
+            //TODO:
             const element = getEventElement(mutations.target);
-            this.searchMatches(element);
+            this._matchesSet.remove(element);
+            this.searchMatches(element); // should not search all dom tree, only its children are needed
             break;
 
           case 'attributes':
-            this.searchMatches(mutations.target);
+            //TODO:
+            const el = mutations.target as Element;
+            this._matchesSet.remove(el);
+            this.searchMatches(el);
             break;
 
           case 'childList':
-            mutations.addedNodes.forEach(node => {
-              this.searchMatches(node);
-            });
             mutations.removedNodes.forEach(node => {
               this.stripMatches(node);
+            });
+            mutations.addedNodes.forEach(node => {
+              this.searchMatches(node);
             });
             break;
 
@@ -182,6 +227,7 @@ class MatchWalker {
       });
     });
     this._observer.observe(node, {
+      // attributeFilter: ['href'],
       attributes: false, // close this since it's so heavy
       characterData: true,
       childList: true,

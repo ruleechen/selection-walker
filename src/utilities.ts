@@ -10,7 +10,7 @@ export const RcIdAttrName = 'rcid';
 export function getRcId(el: Element, createNew: boolean): string {
   let rcId = el.getAttribute(RcIdAttrName);
   if (!rcId && createNew === true) {
-    rcId = nextId();
+    rcId = `r${nextId()}`;
     el.setAttribute(RcIdAttrName, rcId);
   }
   return rcId;
