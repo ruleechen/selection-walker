@@ -81,7 +81,7 @@ class MatchWalker {
       const node = MatchWalker.getEventTarget(match);
       // cache matches
       const matches = this._matchesSet.get<IMatch[]>(node, []);
-      matches.push(match); // duplicated bug
+      matches.push(match); //TODO: duplicate risk
       this._matchesSet.set(node, matches);
       // setup link
       const rcId = node.getAttribute(RcIdAttrName);
@@ -199,17 +199,15 @@ class MatchWalker {
       mutationsList.forEach(mutations => {
         switch (mutations.type) {
           case 'characterData':
-            //TODO:
-            const element = getEventElement(mutations.target);
-            this._matchesSet.remove(element);
-            this.searchMatches(element); // should not search all dom tree, only its children are needed
+            this.stripMatches(mutations.target);
+            this.searchMatches(mutations.target);
             break;
 
           case 'attributes':
-            //TODO:
-            const el = mutations.target as Element;
-            this._matchesSet.remove(el);
-            this.searchMatches(el);
+            //TODO: should not search all dom tree, only its children are needed
+            const element = mutations.target as Element;
+            this._matchesSet.remove(element);
+            this.searchMatches(element);
             break;
 
           case 'childList':
