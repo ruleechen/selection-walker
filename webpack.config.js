@@ -6,7 +6,7 @@ module.exports = {
   output: {
     filename: 'index.js',
     path: path.resolve(__dirname, 'build'),
-    library: 'srect',
+    library: 'smatch',
     libraryTarget: 'umd',
     libraryExport: 'default'
   },

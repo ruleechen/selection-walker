@@ -90,7 +90,7 @@ window.addEventListener('load', function() {
       widgetRoot.style.left = match.rect.right + window.pageXOffset + 5 + 'px';
       // select
       const selection = window.getSelection();
-      const range = srect.MatchWalker.createRange(match);
+      const range = smatch.MatchWalker.createRange(match);
       selection.removeAllRanges();
       selection.addRange(range);
     } else {
@@ -99,7 +99,7 @@ window.addEventListener('load', function() {
     }
   };
 
-  const walker = new srect.MatchWalker({
+  const walker = new smatch.MatchWalker({
     root: document.body,
     matcher: myMatcher,
     hover: myHover

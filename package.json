@@ -1,8 +1,8 @@
 {
-  "name": "srect",
+  "name": "smatch",
   "version": "1.0.0",
   "main": "build/index.js",
-  "repository": "https://github.com/ruleechen/srect.git",
+  "repository": "https://github.com/ruleechen/smatch.git",
   "author": "Rulee Chen <rulee@live.cn>",
   "scripts": {
     "prepublish": "webpack",
