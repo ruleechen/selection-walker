@@ -1,8 +1,8 @@
 function isA(node) {
-  return (
+  const isMatched =
     node.tagName === 'A' &&
-    (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'))
-  );
+    (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'));
+  return isMatched;
 }
 
 function processNode(node) {
@@ -23,9 +23,9 @@ function processNode(node) {
   if (isA(node)) {
     return [
       {
-        startsNode: node.firstChild,
+        startsNode: node,
         startsAt: 0,
-        endsNode: node.firstChild,
+        endsNode: node,
         endsAt: node.innerText.length,
         number: null
       }
@@ -63,12 +63,14 @@ function myMatcher(container) {
   );
   let founds = [];
   let node = walker.currentNode;
-  while (node) {
-    const res = processNode(node);
-    if (res && res.length) {
-      founds = founds.concat(res);
+  if (!isA(node.parentNode)) {
+    while (node) {
+      const res = processNode(node);
+      if (res && res.length) {
+        founds = founds.concat(res);
+      }
+      node = walker.nextNode();
     }
-    node = walker.nextNode();
   }
   return founds;
 }

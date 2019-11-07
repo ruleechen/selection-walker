@@ -166,6 +166,7 @@ class MatchWalker {
     if (matches) {
       const match = matches.find(m => {
         return (
+          m.rect &&
           m.rect.left <= ev.x &&
           ev.x <= m.rect.right &&
           m.rect.top <= ev.y &&
