@@ -104,7 +104,8 @@ window.addEventListener('load', function() {
   const walker = new smatch.MatchWalker({
     root: document.body,
     matcher: myMatcher,
-    hover: myHover
+    hover: myHover,
+    attributeFilter: ['href']
   });
   walker.start();
   window.mWalker = walker;

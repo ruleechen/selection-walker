@@ -200,15 +200,9 @@ class MatchWalker {
       mutationsList.forEach(mutations => {
         switch (mutations.type) {
           case 'characterData':
+            // 'target' is always text node
             this.stripMatches(mutations.target);
             this.searchMatches(mutations.target);
-            break;
-
-          case 'attributes':
-            //TODO: should not search all dom tree, only its children are needed
-            const element = mutations.target as Element;
-            this._matchesSet.remove(element);
-            this.searchMatches(element);
             break;
 
           case 'childList':
@@ -220,14 +214,14 @@ class MatchWalker {
             });
             break;
 
+          case 'attributes':
           default:
             break;
         }
       });
     });
     this._observer.observe(node, {
-      // attributeFilter: ['href'],
-      attributes: false, // close this since it's so heavy
+      attributes: false,
       characterData: true,
       childList: true,
       subtree: true
