@@ -92,7 +92,7 @@ window.addEventListener('load', function() {
       widgetRoot.style.left = match.rect.right + window.pageXOffset + 5 + 'px';
       // select
       const selection = window.getSelection();
-      const range = smatch.MatchWalker.createRange(match);
+      const range = match.createRange();
       selection.removeAllRanges();
       selection.addRange(range);
     } else {

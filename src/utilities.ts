@@ -7,16 +7,22 @@ export const nextId = (function() {
 
 export const RcIdAttrName = 'rcid';
 
-export function getRcId(el: Element, createNew: boolean): string {
-  let rcId = el.getAttribute(RcIdAttrName);
+export function getRcId(node: Element, createNew: boolean): string {
+  if (!node) {
+    throw new Error('[node] is required');
+  }
+  let rcId = node.getAttribute(RcIdAttrName);
   if (!rcId && createNew === true) {
     rcId = `r${nextId()}`;
-    el.setAttribute(RcIdAttrName, rcId);
+    node.setAttribute(RcIdAttrName, rcId);
   }
   return rcId;
 }
 
 export function getEventElement(node: Node): Element {
+  if (!node) {
+    throw new Error('[node] is required');
+  }
   const element =
     node instanceof Element ? (node as Element) : (node.parentNode as Element);
   return element;
@@ -40,4 +46,27 @@ export function isNodeInDom(node: Node): boolean {
     node = node.parentNode;
   }
   return false;
+}
+
+export function isValueNode(node: Node): boolean {
+  if (!node) {
+    return false;
+  }
+  return (
+    node instanceof HTMLInputElement ||
+    node instanceof HTMLSelectElement ||
+    node instanceof HTMLTextAreaElement
+  );
+}
+
+export function queryValueNodes(node: Element): Element[] {
+  let nodes = [];
+  if (isValueNode(node)) {
+    nodes.push(node);
+  } else {
+    for (const tag of ['input', 'textarea', 'select']) {
+      nodes = nodes.concat(Array.from(node.querySelectorAll(tag)));
+    }
+  }
+  return nodes;
 }

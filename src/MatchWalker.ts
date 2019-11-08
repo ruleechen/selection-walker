@@ -1,43 +1,18 @@
 import { IMatch, IWalkerProps } from './interfaces';
-import { getEventElement, RcIdAttrName } from './utilities';
+import { getEventElement, queryValueNodes, RcIdAttrName } from './utilities';
+import MatchObject from './MatchObject';
 import DataSet from './DataSet';
 
 const ParentRcIdPropName = `p${RcIdAttrName}`;
 
 class MatchWalker {
-  static createRange(match: IMatch): Range {
-    const range = document.createRange();
-    if (match.startsNode instanceof Element) {
-      range.setStartBefore(match.startsNode);
-    } else {
-      range.setStart(match.startsNode, match.startsAt);
-    }
-    if (match.endsNode instanceof Element) {
-      range.setEndAfter(match.endsNode);
-    } else {
-      range.setEnd(match.endsNode, match.endsAt);
-    }
-    return range;
-  }
-
-  static getEventTarget(match: IMatch): Element {
-    let node: Node;
-    if (match.startsNode === match.endsNode) {
-      node = match.startsNode;
-    } else {
-      const range = MatchWalker.createRange(match);
-      node = range.commonAncestorContainer;
-      range.detach(); // Releases the Range from use to improve performance.
-    }
-    return getEventElement(node);
-  }
-
   private _observer: MutationObserver;
   private _matchesSet: DataSet = new DataSet();
   private _mouseenterHandler: EventListener;
   private _mouseleaveHandler: EventListener;
   private _mousemoveHandler: EventListener;
-  private _lastMatch: IMatch;
+  private _changeHandler: EventListener;
+  private _lastHovered: MatchObject;
 
   constructor(private props: IWalkerProps) {
     if (!this.props.root) {
@@ -58,17 +33,22 @@ class MatchWalker {
     };
     this._mouseleaveHandler = function(ev: MouseEvent) {
       ev.cancelBubble = true;
-      me.hideMatched();
+      me.hideHovered();
     };
     this._mousemoveHandler = function(ev: MouseEvent) {
       ev.cancelBubble = true;
       const node = this as Element;
       me.matchRect(node, ev);
     };
+    this._changeHandler = function() {
+      const node = this as Element;
+      me.observeValueNode(node);
+    };
   }
 
   start() {
     this.observe(this.props.root);
+    this.bindValueNodes(this.props.root);
     this.searchMatches(this.props.root);
   }
 
@@ -76,21 +56,29 @@ class MatchWalker {
     if (!node) {
       throw new Error('[node] is required');
     }
-    const matches = this.props.matcher(node);
-    matches.forEach(match => {
-      const node = MatchWalker.getEventTarget(match);
-      // cache matches
-      const matches = this._matchesSet.get<IMatch[]>(node, []);
-      matches.push(match); //TODO: duplicate risk
-      this._matchesSet.set(node, matches);
-      // setup link
-      const rcId = node.getAttribute(RcIdAttrName);
-      match.startsNode[ParentRcIdPropName] = rcId;
-      match.endsNode[ParentRcIdPropName] = rcId;
-      // attach events
-      this.removeNodeEvents(node);
-      this.addNodeEvents(node);
+    const matched = this.props.matcher(node);
+    matched.forEach(match => {
+      this.addMatch(match);
     });
+  }
+
+  addMatch(imatch: IMatch) {
+    if (!imatch) {
+      throw new Error('[imatch] is required');
+    }
+    const match = new MatchObject(imatch);
+    const node = match.getEventTarget();
+    // cache matches
+    const matches = this._matchesSet.get<MatchObject[]>(node, []);
+    matches.push(match); //TODO: duplicate risk
+    this._matchesSet.set(node, matches);
+    // setup link
+    const rcId = node.getAttribute(RcIdAttrName);
+    match.startsNode[ParentRcIdPropName] = rcId;
+    match.endsNode[ParentRcIdPropName] = rcId;
+    // attach events
+    this.removeNodeEvents(node);
+    this.addNodeEvents(node);
   }
 
   stripMatches(node: Node) {
@@ -115,7 +103,7 @@ class MatchWalker {
           `[${RcIdAttrName}="${parentRcId}"]`
         );
         if (parentNode) {
-          let matches = this._matchesSet.get<IMatch[]>(parentNode);
+          let matches = this._matchesSet.get<MatchObject[]>(parentNode);
           if (matches) {
             matches = matches.filter(m => {
               return m.startsNode !== node && m.endsNode !== node;
@@ -144,6 +132,24 @@ class MatchWalker {
     node.removeEventListener('mousemove', this._mousemoveHandler);
   }
 
+  private bindValueNodes(node: Node) {
+    if (node instanceof Element) {
+      const valueNodes = queryValueNodes(node);
+      valueNodes.forEach(node => {
+        node.addEventListener('change', this._changeHandler);
+      });
+    }
+  }
+
+  private unbindValueNodes(node: Node) {
+    if (node instanceof Element) {
+      const valueNodes = queryValueNodes(node);
+      valueNodes.forEach(node => {
+        node.removeEventListener('change', this._changeHandler);
+      });
+    }
+  }
+
   private clearNodeMatches(node: Element) {
     this.removeNodeEvents(node);
     this._matchesSet.remove(node);
@@ -151,10 +157,10 @@ class MatchWalker {
   }
 
   private buildRect(node: Element) {
-    const matches = this._matchesSet.get<IMatch[]>(node);
+    const matches = this._matchesSet.get<MatchObject[]>(node);
     if (matches) {
       matches.forEach(match => {
-        const range = MatchWalker.createRange(match);
+        const range = match.createRange();
         match.rect = range.getBoundingClientRect();
         range.detach(); // Releases the Range from use to improve performance.
       });
@@ -162,9 +168,9 @@ class MatchWalker {
   }
 
   private matchRect(node: Element, ev: MouseEvent) {
-    const matches = this._matchesSet.get<IMatch[]>(node);
+    const matches = this._matchesSet.get<MatchObject[]>(node);
     if (matches) {
-      const match = matches.find(m => {
+      const hovered = matches.find(m => {
         return (
           m.rect &&
           m.rect.left <= ev.x &&
@@ -173,24 +179,24 @@ class MatchWalker {
           ev.y <= m.rect.bottom
         );
       });
-      if (match) {
-        this.showMatched(match);
+      if (hovered) {
+        this.showHovered(hovered);
       } else {
-        this.hideMatched();
+        this.hideHovered();
       }
     }
   }
 
-  private showMatched(match: IMatch) {
-    if (!this._lastMatch || this._lastMatch !== match) {
-      this._lastMatch = match;
-      this.props.hover(match);
+  private showHovered(hovered: MatchObject) {
+    if (!this._lastHovered || this._lastHovered !== hovered) {
+      this._lastHovered = hovered;
+      this.props.hover(hovered);
     }
   }
 
-  private hideMatched() {
-    if (this._lastMatch) {
-      this._lastMatch = null;
+  private hideHovered() {
+    if (this._lastHovered) {
+      this._lastHovered = null;
       this.props.hover(null);
     }
   }
@@ -207,9 +213,11 @@ class MatchWalker {
 
           case 'childList':
             mutations.removedNodes.forEach(node => {
+              this.unbindValueNodes(node);
               this.stripMatches(node);
             });
             mutations.addedNodes.forEach(node => {
+              this.bindValueNodes(node);
               this.searchMatches(node);
             });
             break;
@@ -228,9 +236,26 @@ class MatchWalker {
     });
   }
 
+  private observeValueNode(node: Element) {
+    const matched = this.props.matcher(node) || [];
+    const matches = this._matchesSet.get(node, []);
+    const hasMatched = matched.length > 0;
+    const hasMatches = matches.length > 0;
+    if (hasMatched !== hasMatches) {
+      if (hasMatched) {
+        matched.forEach(match => {
+          this.addMatch(match);
+        });
+      } else {
+        this.stripMatches(node);
+      }
+    }
+  }
+
   destroy() {
     this._observer.disconnect();
     this.stripMatches(this.props.root);
+    this.unbindValueNodes(this.props.root);
     this._matchesSet.clear();
   }
 }

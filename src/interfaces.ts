@@ -3,7 +3,6 @@ export interface IMatch {
   startsAt: number;
   endsNode: Node;
   endsAt: number;
-  rect: ClientRect;
   number: any;
 }
 
