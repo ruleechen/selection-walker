@@ -40,6 +40,22 @@ class MatchObject implements IMatch {
     return getEventElement(node);
   }
 
+  buildRect() {
+    const range = this.createRange();
+    this._rect = range.getBoundingClientRect();
+    range.detach(); // Releases the Range from use to improve performance.
+  }
+
+  isMatch(x: number, y: number): boolean {
+    return (
+      this.rect &&
+      this.rect.left <= x &&
+      x <= this.rect.right &&
+      this.rect.top <= y &&
+      y <= this.rect.bottom
+    );
+  }
+
   get startsNode(): Node {
     return this.props.startsNode;
   }
@@ -58,10 +74,6 @@ class MatchObject implements IMatch {
 
   get rect(): ClientRect {
     return this._rect;
-  }
-
-  set rect(value: ClientRect) {
-    this._rect = value;
   }
 
   get context(): any {

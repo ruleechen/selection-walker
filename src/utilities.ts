@@ -6,6 +6,7 @@ export const nextId = (function() {
 })();
 
 export const RcIdAttrName = 'rcid';
+export const LinkedRcIdPropName = `l${RcIdAttrName}`;
 
 export function getRcId(node: Element, createNew: boolean): string {
   if (!node) {

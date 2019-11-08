@@ -1,9 +1,12 @@
 import { IMatch, IWalkerProps } from './interfaces';
-import { getEventElement, queryValueNodes, RcIdAttrName } from './utilities';
+import {
+  getEventElement,
+  queryValueNodes,
+  RcIdAttrName,
+  LinkedRcIdPropName
+} from './utilities';
 import MatchObject from './MatchObject';
 import DataSet from './DataSet';
-
-const ParentRcIdPropName = `p${RcIdAttrName}`;
 
 class MatchWalker {
   private _observer: MutationObserver;
@@ -74,8 +77,8 @@ class MatchWalker {
     this._matchesSet.set(node, matches);
     // setup link
     const rcId = node.getAttribute(RcIdAttrName);
-    match.startsNode[ParentRcIdPropName] = rcId;
-    match.endsNode[ParentRcIdPropName] = rcId;
+    match.startsNode[LinkedRcIdPropName] = rcId;
+    match.endsNode[LinkedRcIdPropName] = rcId;
     // attach events
     this.removeNodeEvents(node);
     this.addNodeEvents(node);
@@ -97,7 +100,7 @@ class MatchWalker {
         this.clearNodeMatches(el);
       });
     } else {
-      const parentRcId = node[ParentRcIdPropName];
+      const parentRcId = node[LinkedRcIdPropName];
       if (parentRcId) {
         const parentNode = document.querySelector(
           `[${RcIdAttrName}="${parentRcId}"]`
@@ -160,9 +163,7 @@ class MatchWalker {
     const matches = this._matchesSet.get<MatchObject[]>(node);
     if (matches) {
       matches.forEach(match => {
-        const range = match.createRange();
-        match.rect = range.getBoundingClientRect();
-        range.detach(); // Releases the Range from use to improve performance.
+        match.buildRect();
       });
     }
   }
@@ -171,13 +172,7 @@ class MatchWalker {
     const matches = this._matchesSet.get<MatchObject[]>(node);
     if (matches) {
       const hovered = matches.find(m => {
-        return (
-          m.rect &&
-          m.rect.left <= ev.x &&
-          ev.x <= m.rect.right &&
-          m.rect.top <= ev.y &&
-          ev.y <= m.rect.bottom
-        );
+        return m.isMatch(ev.x, ev.y);
       });
       if (hovered) {
         this.showHovered(hovered);
