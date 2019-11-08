@@ -3,7 +3,7 @@ export interface IMatch {
   startsAt: number;
   endsNode: Node;
   endsAt: number;
-  number: any;
+  context: any;
 }
 
 export interface IMatcher {

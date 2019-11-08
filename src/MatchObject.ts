@@ -64,8 +64,8 @@ class MatchObject implements IMatch {
     this._rect = value;
   }
 
-  get number(): any {
-    return this.props.number;
+  get context(): any {
+    return this.props.context;
   }
 }
 

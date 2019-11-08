@@ -16,7 +16,7 @@ function processNode(node) {
         startsAt: item.startsAt,
         endsNode: node,
         endsAt: item.endsAt,
-        number: item.number
+        context: item.number
       };
     });
   }
@@ -27,7 +27,7 @@ function processNode(node) {
         startsAt: 0,
         endsNode: node,
         endsAt: node.innerText.length,
-        number: null
+        context: null
       }
     ];
   }
@@ -41,7 +41,7 @@ function processNode(node) {
         startsAt: item.startsAt,
         endsNode: node,
         endsAt: item.endsAt,
-        number: item.number
+        context: item.number
       };
     });
   }
