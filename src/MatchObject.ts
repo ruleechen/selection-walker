@@ -1,4 +1,4 @@
-import { getEventElement } from './utilities';
+import { getEventElement, getRcId, LinkedRcIdPropName } from './utilities';
 import { IMatch } from './interfaces';
 
 class MatchObject implements IMatch {
@@ -11,6 +11,11 @@ class MatchObject implements IMatch {
     if (!this.props.endsNode) {
       throw new Error('[endsNode] is required');
     }
+    // setup link
+    const target = this.getEventTarget();
+    const rcId = getRcId(target, true);
+    this.startsNode[LinkedRcIdPropName] = rcId;
+    this.endsNode[LinkedRcIdPropName] = rcId;
   }
 
   createRange(): Range {

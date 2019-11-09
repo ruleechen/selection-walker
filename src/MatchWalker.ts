@@ -1,6 +1,6 @@
 import { IMatch, IWalkerProps } from './interfaces';
 import {
-  getEventElement,
+  getRcId,
   queryValueNodes,
   RcIdAttrName,
   LinkedRcIdPropName
@@ -59,9 +59,9 @@ class MatchWalker {
     if (!node) {
       throw new Error('[node] is required');
     }
-    const matched = this.props.matcher(node);
-    matched.forEach(match => {
-      this.addMatch(match);
+    const imatches = this.props.matcher(node);
+    imatches.forEach(imatch => {
+      this.addMatch(imatch);
     });
   }
 
@@ -69,56 +69,54 @@ class MatchWalker {
     if (!imatch) {
       throw new Error('[imatch] is required');
     }
-    const match = new MatchObject(imatch);
-    const node = match.getEventTarget();
+    const match =
+      imatch instanceof MatchObject ? imatch : new MatchObject(imatch);
+    const target = match.getEventTarget();
     // cache matches
-    const matches = this._matchesSet.get<MatchObject[]>(node, []);
+    const matches = this._matchesSet.get<MatchObject[]>(target, []);
     matches.push(match); //TODO: duplicate risk
-    this._matchesSet.set(node, matches);
-    // setup link
-    const rcId = node.getAttribute(RcIdAttrName);
-    match.startsNode[LinkedRcIdPropName] = rcId;
-    match.endsNode[LinkedRcIdPropName] = rcId;
+    this._matchesSet.set(target, matches);
     // attach events
-    this.removeNodeEvents(node);
-    this.addNodeEvents(node);
+    this.removeNodeEvents(target);
+    this.addNodeEvents(target);
   }
 
   stripMatches(node: Node) {
     if (!node) {
       throw new Error('[node] is required');
     }
-    if (node instanceof Element) {
-      const element = getEventElement(node);
-      const elements = Array.from(
-        element.querySelectorAll(`[${RcIdAttrName}]`)
-      );
-      if (element.getAttribute(RcIdAttrName)) {
-        elements.push(element);
-      }
-      elements.forEach(el => {
-        this.clearNodeMatches(el);
-      });
-    } else {
-      const parentRcId = node[LinkedRcIdPropName];
-      if (parentRcId) {
-        const parentNode = document.querySelector(
-          `[${RcIdAttrName}="${parentRcId}"]`
-        );
-        if (parentNode) {
-          let matches = this._matchesSet.get<MatchObject[]>(parentNode);
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
+    let current = walker.currentNode;
+    while (current) {
+      const linkedRcId = current[LinkedRcIdPropName];
+      if (linkedRcId) {
+        let target: Element;
+        const selector = `[${RcIdAttrName}="${linkedRcId}"]`;
+        if (node instanceof Element) {
+          target = node.querySelector(selector);
+          if (!target && getRcId(node, false) === linkedRcId) {
+            target = node;
+          }
+        }
+        if (!target) {
+          target = document.querySelector(selector);
+        }
+        if (target) {
+          let matches = this._matchesSet.get<MatchObject[]>(target);
           if (matches) {
             matches = matches.filter(m => {
-              return m.startsNode !== node && m.endsNode !== node;
+              return m.startsNode !== current && m.endsNode !== current;
             });
             if (matches.length) {
-              this._matchesSet.set(parentNode, matches);
+              this._matchesSet.set(target, matches);
             } else {
-              this.clearNodeMatches(parentNode);
+              this.clearNodeMatches(target);
             }
+            delete current[LinkedRcIdPropName];
           }
         }
       }
+      current = walker.nextNode();
     }
   }
 
