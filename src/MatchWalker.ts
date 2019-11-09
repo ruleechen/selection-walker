@@ -94,7 +94,9 @@ class MatchWalker {
       if (matches.length) {
         this._matchesSet.set(target, matches);
       } else {
-        this.clearNodeMatches(target);
+        this.removeNodeEvents(target);
+        this._matchesSet.remove(target);
+        target.removeAttribute(RcIdAttrName);
       }
     }
   }
@@ -103,8 +105,8 @@ class MatchWalker {
     if (!node) {
       throw new Error('[node] is required');
     }
-    const walker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
-    let current = walker.currentNode;
+    const treeWalker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
+    let current = treeWalker.currentNode;
     while (current) {
       const linkedRcId = current[LinkedRcIdPropName];
       if (linkedRcId) {
@@ -136,7 +138,7 @@ class MatchWalker {
           }
         }
       }
-      current = walker.nextNode();
+      current = treeWalker.nextNode();
     }
   }
 
@@ -169,12 +171,6 @@ class MatchWalker {
         node.removeEventListener('change', this._changeHandler);
       });
     }
-  }
-
-  private clearNodeMatches(node: Element) {
-    this.removeNodeEvents(node);
-    this._matchesSet.remove(node);
-    node.removeAttribute(RcIdAttrName);
   }
 
   private buildRect(node: Element) {
@@ -225,6 +221,7 @@ class MatchWalker {
             break;
 
           case 'childList':
+            //TODO: remove or add node under value node still need optimizing (trigger change event?)
             mutations.removedNodes.forEach(node => {
               this.unbindValueNodes(node);
               this.stripMatches(node);

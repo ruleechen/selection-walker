@@ -1,5 +1,5 @@
-import { getEventElement, getRcId, LinkedRcIdPropName } from './utilities';
 import { IMatch } from './interfaces';
+import { getEventElement, getRcId, LinkedRcIdPropName } from './utilities';
 
 class MatchObject implements IMatch {
   private _rect: ClientRect;

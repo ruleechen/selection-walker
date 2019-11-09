@@ -1,12 +1,26 @@
-function isA(node) {
+function isLinkNode(node) {
   const isMatched =
     node.tagName === 'A' &&
     (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'));
   return isMatched;
 }
 
+const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
+function isValueNode(node) {
+  return valueNodeTypes.indexOf(node.tagName) !== -1;
+}
+
+function isReject(node) {
+  return (
+    node.tagName === 'SCRIPT' ||
+    node.tagName === 'RC-C2D-MENU' ||
+    isLinkNode(node.parentNode) ||
+    isValueNode(node.parentNode)
+  );
+}
+
 function processNode(node) {
-  if (node.tagName === 'INPUT') {
+  if (isValueNode(node)) {
     const numbers = libphonenumber.findNumbers(node.value, {
       v2: true
     });
@@ -20,14 +34,16 @@ function processNode(node) {
       };
     });
   }
-  if (isA(node)) {
+  if (isLinkNode(node)) {
     return [
       {
         startsNode: node,
         startsAt: 0,
         endsNode: node,
         endsAt: node.innerText.length,
-        context: null
+        context: {
+          number: node.href
+        }
       }
     ];
   }
@@ -48,28 +64,25 @@ function processNode(node) {
   return null;
 }
 
-function myMatcher(container) {
-  const walker = document.createTreeWalker(
-    container,
+function myMatcher(node) {
+  const treeWalker = document.createTreeWalker(
+    node,
     NodeFilter.SHOW_ALL,
-    function(node) {
-      if (node.tagName === 'RC-C2D-MENU' || node.tagName === 'SCRIPT') {
-        return NodeFilter.FILTER_SKIP;
-      }
-      return isA(node.parentNode)
-        ? NodeFilter.FILTER_SKIP
+    function(nextNode) {
+      return isReject(nextNode)
+        ? NodeFilter.FILTER_REJECT
         : NodeFilter.FILTER_ACCEPT;
     }
   );
   let founds = [];
-  let node = walker.currentNode;
-  if (!isA(node.parentNode)) {
-    while (node) {
-      const res = processNode(node);
+  let current = treeWalker.currentNode;
+  if (!isReject(current)) {
+    while (current) {
+      const res = processNode(current);
       if (res && res.length) {
         founds = founds.concat(res);
       }
-      node = walker.nextNode();
+      current = treeWalker.nextNode();
     }
   }
   return founds;
@@ -90,6 +103,9 @@ window.addEventListener('load', function() {
       widgetRoot.style.display = 'block';
       widgetRoot.style.top = match.rect.top + window.pageYOffset + 'px';
       widgetRoot.style.left = match.rect.right + window.pageXOffset + 5 + 'px';
+      if (match.context && match.context.number) {
+        widgetRoot.firstChild.innerHTML = match.context.number;
+      }
       // select
       const selection = window.getSelection();
       const range = match.createRange();
@@ -104,8 +120,7 @@ window.addEventListener('load', function() {
   const walker = new smatch.MatchWalker({
     root: document.body,
     matcher: myMatcher,
-    hover: myHover,
-    attributeFilter: ['href']
+    hover: myHover
   });
   walker.start();
   window.mWalker = walker;

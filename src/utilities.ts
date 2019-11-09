@@ -1,12 +1,13 @@
+export const RcIdAttrName = 'rcid';
+export const LinkedRcIdPropName = `l${RcIdAttrName}`;
+export const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
+
 export const nextId = (function() {
   let incrementingId = 0;
   return function(): string {
     return (incrementingId++).toString();
   };
 })();
-
-export const RcIdAttrName = 'rcid';
-export const LinkedRcIdPropName = `l${RcIdAttrName}`;
 
 export function getRcId(node: Element, createNew: boolean): string {
   if (!node) {
@@ -50,14 +51,9 @@ export function isNodeInDom(node: Node): boolean {
 }
 
 export function isValueNode(node: Node): boolean {
-  if (!node) {
-    return false;
-  }
-  return (
-    node instanceof HTMLInputElement ||
-    node instanceof HTMLSelectElement ||
-    node instanceof HTMLTextAreaElement
-  );
+  return node instanceof Element
+    ? valueNodeTypes.indexOf(node.tagName) !== -1
+    : false;
 }
 
 export function queryValueNodes(node: Element): Element[] {
@@ -65,7 +61,7 @@ export function queryValueNodes(node: Element): Element[] {
   if (isValueNode(node)) {
     nodes.push(node);
   } else {
-    for (const tag of ['input', 'textarea', 'select']) {
+    for (const tag of valueNodeTypes) {
       nodes = nodes.concat(Array.from(node.querySelectorAll(tag)));
     }
   }
