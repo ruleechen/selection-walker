@@ -65,7 +65,7 @@ class MatchWalker {
     });
   }
 
-  addMatch(imatch: IMatch) {
+  addMatch(imatch: IMatch): MatchObject {
     if (!imatch) {
       throw new Error('[imatch] is required');
     }
@@ -79,6 +79,24 @@ class MatchWalker {
     // attach events
     this.removeNodeEvents(target);
     this.addNodeEvents(target);
+    // ret
+    return match;
+  }
+
+  removeMatch(match: MatchObject) {
+    if (!match) {
+      throw new Error('[match] is required');
+    }
+    const target = match.getEventTarget();
+    let matches = this._matchesSet.get<MatchObject[]>(target);
+    if (matches) {
+      matches = matches.filter(x => x !== match);
+      if (matches.length) {
+        this._matchesSet.set(target, matches);
+      } else {
+        this.clearNodeMatches(target);
+      }
+    }
   }
 
   stripMatches(node: Node) {
@@ -90,6 +108,9 @@ class MatchWalker {
     while (current) {
       const linkedRcId = current[LinkedRcIdPropName];
       if (linkedRcId) {
+        // unlink
+        delete current[LinkedRcIdPropName];
+        // find target
         let target: Element;
         const selector = `[${RcIdAttrName}="${linkedRcId}"]`;
         if (node instanceof Element) {
@@ -101,18 +122,17 @@ class MatchWalker {
         if (!target) {
           target = document.querySelector(selector);
         }
+        // remove matchs
         if (target) {
-          let matches = this._matchesSet.get<MatchObject[]>(target);
+          const matches = this._matchesSet.get<MatchObject[]>(target);
           if (matches) {
-            matches = matches.filter(m => {
-              return m.startsNode !== current && m.endsNode !== current;
-            });
-            if (matches.length) {
-              this._matchesSet.set(target, matches);
-            } else {
-              this.clearNodeMatches(target);
-            }
-            delete current[LinkedRcIdPropName];
+            matches
+              .filter(match => {
+                return match.contains(current);
+              })
+              .forEach(match => {
+                this.removeMatch(match);
+              });
           }
         }
       }

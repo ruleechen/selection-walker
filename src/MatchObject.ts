@@ -3,6 +3,7 @@ import { IMatch } from './interfaces';
 
 class MatchObject implements IMatch {
   private _rect: ClientRect;
+  private _target: Element;
 
   constructor(private props: IMatch) {
     if (!this.props.startsNode) {
@@ -34,15 +35,18 @@ class MatchObject implements IMatch {
   }
 
   getEventTarget(): Element {
-    let node: Node;
-    if (this.startsNode === this.endsNode) {
-      node = this.startsNode;
-    } else {
-      const range = this.createRange();
-      node = range.commonAncestorContainer;
-      range.detach(); // Releases the Range from use to improve performance.
+    if (!this._target) {
+      let node: Node;
+      if (this.startsNode === this.endsNode) {
+        node = this.startsNode;
+      } else {
+        const range = this.createRange();
+        node = range.commonAncestorContainer;
+        range.detach(); // Releases the Range from use to improve performance.
+      }
+      this._target = getEventElement(node);
     }
-    return getEventElement(node);
+    return this._target;
   }
 
   buildRect() {
@@ -59,6 +63,10 @@ class MatchObject implements IMatch {
       this.rect.top <= y &&
       y <= this.rect.bottom
     );
+  }
+
+  contains(node: Node): boolean {
+    return this.startsNode === node || this.endsNode === node;
   }
 
   get startsNode(): Node {
