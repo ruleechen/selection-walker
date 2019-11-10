@@ -28,24 +28,28 @@ class MatchWalker {
       throw new Error('Prop [hover] is required');
     }
     // event handlers
+    // ev.target is what triggers the event dispatcher to trigger
+    // ev.currentTarget is what you assigned your listener to
     const me = this;
     this._mouseenterHandler = function(ev: MouseEvent) {
-      ev.cancelBubble = true;
-      const node = this as Element;
-      me.buildRect(node);
+      if (ev.target === ev.currentTarget) {
+        me.buildRect(ev.target as Element);
+      }
     };
     this._mouseleaveHandler = function(ev: MouseEvent) {
-      ev.cancelBubble = true;
-      me.hideHovered();
+      if (ev.target === ev.currentTarget) {
+        me.hideHovered();
+      }
     };
     this._mousemoveHandler = function(ev: MouseEvent) {
-      ev.cancelBubble = true;
-      const node = this as Element;
-      me.matchRect(node, ev);
+      if (ev.target === ev.currentTarget) {
+        me.matchRect(ev.target as Element, ev);
+      }
     };
-    this._changeHandler = function() {
-      const node = this as Element;
-      me.observeValueNode(node);
+    this._changeHandler = function(ev: Event) {
+      if (ev.target === ev.currentTarget) {
+        me.observeValueNode(ev.target as Element);
+      }
     };
   }
 
@@ -215,13 +219,15 @@ class MatchWalker {
       mutationsList.forEach(mutations => {
         switch (mutations.type) {
           case 'characterData':
-            // 'target' is always text node
+            // here the 'target' is always a text node
             this.stripMatches(mutations.target);
             this.searchMatches(mutations.target);
             break;
 
           case 'childList':
-            //TODO: remove or add node under value node still need optimizing (trigger change event?)
+            //TODO: remove or add node under value node still need optimizing
+            // proper solution: find the value node of removed/added node's parents
+            // then call observeValueNode if exists parent value node
             mutations.removedNodes.forEach(node => {
               this.unbindValueNodes(node);
               this.stripMatches(node);

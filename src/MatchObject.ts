@@ -35,6 +35,8 @@ class MatchObject implements IMatch {
   }
 
   getEventTarget(): Element {
+    // should cache event target reference
+    // we can't get the correct event target when the startsNode or the endsNode is removed
     if (!this._target) {
       let node: Node;
       if (this.startsNode === this.endsNode) {
