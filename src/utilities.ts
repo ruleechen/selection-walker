@@ -41,11 +41,12 @@ export function isNodeInDom(node: Node): boolean {
       return true;
     }
   }
-  while (node) {
-    if (node === document.body) {
+  let current = node;
+  while (current) {
+    if (current === document.body) {
       return true;
     }
-    node = node.parentNode;
+    current = current.parentNode;
   }
   return false;
 }
@@ -66,4 +67,17 @@ export function queryValueNodes(node: Element): Element[] {
     }
   }
   return nodes;
+}
+
+export function upFirstValueNode(node: Node, levels: number = 3): Element {
+  let search = 0;
+  let current = node;
+  while (current && search < levels) {
+    if (isValueNode(current)) {
+      return current as Element;
+    }
+    search = search + 1;
+    current = current.parentNode;
+  }
+  return null;
 }

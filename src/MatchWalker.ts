@@ -1,12 +1,14 @@
 import { IMatch, IWalkerProps } from './interfaces';
+import MatchObject from './MatchObject';
+import DataSet from './DataSet';
 import {
   getRcId,
+  isValueNode,
   queryValueNodes,
+  upFirstValueNode,
   RcIdAttrName,
   LinkedRcIdPropName
 } from './utilities';
-import MatchObject from './MatchObject';
-import DataSet from './DataSet';
 
 class MatchWalker {
   private _observer: MutationObserver;
@@ -220,22 +222,30 @@ class MatchWalker {
         switch (mutations.type) {
           case 'characterData':
             // here the 'target' is always a text node
-            this.stripMatches(mutations.target);
-            this.searchMatches(mutations.target);
+            const valueNode1 = upFirstValueNode(mutations.target.parentNode);
+            if (valueNode1) {
+              this.observeValueNode(valueNode1);
+            } else {
+              this.stripMatches(mutations.target);
+              this.searchMatches(mutations.target);
+            }
             break;
 
           case 'childList':
-            //TODO: remove or add node under value node still need optimizing
-            // proper solution: find the value node of removed/added node's parents
-            // then call observeValueNode if exists parent value node
-            mutations.removedNodes.forEach(node => {
-              this.unbindValueNodes(node);
-              this.stripMatches(node);
-            });
-            mutations.addedNodes.forEach(node => {
-              this.bindValueNodes(node);
-              this.searchMatches(node);
-            });
+            // here the 'target' is the parent of node being removed/added
+            const valueNode2 = upFirstValueNode(mutations.target);
+            if (valueNode2) {
+              this.observeValueNode(valueNode2);
+            } else {
+              mutations.removedNodes.forEach(node => {
+                this.unbindValueNodes(node);
+                this.stripMatches(node);
+              });
+              mutations.addedNodes.forEach(node => {
+                this.bindValueNodes(node);
+                this.searchMatches(node);
+              });
+            }
             break;
 
           case 'attributes':
