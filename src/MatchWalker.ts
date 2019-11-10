@@ -3,7 +3,6 @@ import MatchObject from './MatchObject';
 import DataSet from './DataSet';
 import {
   getRcId,
-  isValueNode,
   queryValueNodes,
   upFirstValueNode,
   RcIdAttrName,
@@ -66,9 +65,11 @@ class MatchWalker {
       throw new Error('[node] is required');
     }
     const imatches = this.props.matcher(node);
-    imatches.forEach(imatch => {
-      this.addMatch(imatch);
-    });
+    if (imatches) {
+      imatches.forEach(imatch => {
+        this.addMatch(imatch);
+      });
+    }
   }
 
   addMatch(imatch: IMatch): MatchObject {
@@ -263,10 +264,10 @@ class MatchWalker {
   }
 
   private observeValueNode(node: Element) {
-    const matched = this.props.matcher(node) || [];
-    const matches = this._matchesSet.get(node, []);
-    const hasMatched = matched.length > 0;
-    const hasMatches = matches.length > 0;
+    const matched = this.props.matcher(node);
+    const matches = this._matchesSet.get<MatchObject[]>(node);
+    const hasMatched = matched && matched.length > 0;
+    const hasMatches = matches && matches.length > 0;
     if (hasMatched !== hasMatches) {
       if (hasMatched) {
         matched.forEach(match => {

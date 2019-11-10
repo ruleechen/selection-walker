@@ -64,7 +64,46 @@ function processNode(node) {
   return null;
 }
 
+let widgetRoot;
+let hideTmeoutId;
+
+function hideWidget() {
+  hideTmeoutId = setTimeout(function() {
+    widgetRoot.style.display = 'none';
+  }, 512);
+}
+
+function showWidget(match) {
+  clearTimeout(hideTmeoutId);
+  widgetRoot.style.display = 'block';
+  widgetRoot.style.top = match.rect.top + window.pageYOffset + 'px';
+  widgetRoot.style.left = match.rect.right + window.pageXOffset + 5 + 'px';
+  if (match.context && match.context.number) {
+    widgetRoot.firstChild.innerHTML = match.context.number;
+  }
+}
+
+function initWidget() {
+  widgetRoot = document.createElement('RC-C2D-MENU');
+  document.body.appendChild(widgetRoot);
+  widgetRoot.innerHTML =
+    '<div style="border:1px solid #ccc; background:#eee; cursor:pointer;">I am menu</div>';
+  widgetRoot.style.position = 'absolute';
+  widgetRoot.style.display = 'none';
+  widgetRoot.style.zIndex = 10000;
+
+  widgetRoot.addEventListener('mouseenter', function() {
+    clearTimeout(hideTmeoutId);
+  });
+  widgetRoot.addEventListener('mouseleave', function() {
+    hideWidget();
+  });
+}
+
 function myMatcher(node) {
+  if (node === widgetRoot || widgetRoot.contains(node)) {
+    return;
+  }
   const treeWalker = document.createTreeWalker(
     node,
     NodeFilter.SHOW_ALL,
@@ -89,44 +128,29 @@ function myMatcher(node) {
 }
 
 window.addEventListener('load', function() {
-  const widgetRoot = document.createElement('RC-C2D-MENU');
-  document.body.appendChild(widgetRoot);
-  widgetRoot.innerHTML =
-    '<div style="border:1px solid #ccc; background:#eee;">I am menu</div>';
-  widgetRoot.style.position = 'absolute';
-  widgetRoot.style.display = 'none';
-  widgetRoot.style.zIndex = 10000;
-
-  const myHover = function(match) {
-    if (match) {
-      // display
-      widgetRoot.style.display = 'block';
-      widgetRoot.style.top = match.rect.top + window.pageYOffset + 'px';
-      widgetRoot.style.left = match.rect.right + window.pageXOffset + 5 + 'px';
-      if (match.context && match.context.number) {
-        widgetRoot.firstChild.innerHTML = match.context.number;
-      }
-      // select
-      const selection = window.getSelection();
-      const range = match.createRange();
-      selection.removeAllRanges();
-      selection.addRange(range);
-    } else {
-      // hide
-      widgetRoot.style.display = 'none';
-    }
-  };
+  initWidget();
 
   const walker = new smatch.MatchWalker({
     root: document.body,
     matcher: myMatcher,
-    hover: myHover
+    hover(match) {
+      if (match) {
+        showWidget(match);
+      } else {
+        hideWidget();
+      }
+    }
   });
   walker.start();
-  window.mWalker = walker;
+  window.mwalker = walker;
 });
 
 /*
+const selection = window.getSelection();
+const range = match.createRange();
+selection.removeAllRanges();
+selection.addRange(range);
+
 var p1 = document.querySelector('#p1');
 var p2 = document.querySelector('#p2');
 var range = document.createRange();
@@ -135,5 +159,5 @@ range.setEnd(p2.firstChild, 5);
 var sele = window.getSelection();
 sele.removeAllRanges();
 sele.addRange(range);
-console.log(range.getBoundingClientRect());
+console.log(range.getBoundingClientRect());s
 */
