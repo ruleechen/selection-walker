@@ -20,7 +20,7 @@ class MatchWalker {
 
   constructor(private props: IWalkerProps) {
     if (!this.props.root) {
-      throw new Error('Prop [container] is required');
+      throw new Error('Prop [root] is required');
     }
     if (!this.props.matcher) {
       throw new Error('Prop [matcher] is required');
@@ -31,25 +31,24 @@ class MatchWalker {
     // event handlers
     // ev.target is what triggers the event dispatcher to trigger
     // ev.currentTarget is what you assigned your listener to
-    const me = this;
-    this._mouseenterHandler = function(ev: MouseEvent) {
+    this._mouseenterHandler = (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
-        me.buildRect(ev.target as Element);
+        this.buildRect(ev.target as Element);
       }
     };
-    this._mouseleaveHandler = function(ev: MouseEvent) {
+    this._mouseleaveHandler = (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
-        me.hideHovered();
+        this.hideHovered();
       }
     };
-    this._mousemoveHandler = function(ev: MouseEvent) {
+    this._mousemoveHandler = (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
-        me.matchRect(ev.target as Element, ev);
+        this.matchRect(ev.target as Element, ev);
       }
     };
-    this._changeHandler = function(ev: Event) {
+    this._changeHandler = (ev: Event) => {
       if (ev.target === ev.currentTarget) {
-        me.observeValueNode(ev.target as Element);
+        this.observeValueNode(ev.target as Element);
       }
     };
   }
@@ -60,19 +59,24 @@ class MatchWalker {
     this.searchMatches(this.props.root);
   }
 
-  searchMatches(node: Node) {
+  private searchMatches(node: Node) {
     if (!node) {
       throw new Error('[node] is required');
     }
-    const imatches = this.props.matcher(node);
-    if (imatches) {
-      imatches.forEach(imatch => {
-        this.addMatch(imatch);
+    const matched = this.proceedMatch(node);
+    if (matched) {
+      matched.forEach(match => {
+        this.addMatch(match);
       });
     }
   }
 
-  addMatch(imatch: IMatch): MatchObject {
+  private proceedMatch(node: Node): IMatch[] {
+    const matched = this.props.matcher(node);
+    return matched;
+  }
+
+  addMatch(imatch: IMatch | MatchObject): MatchObject {
     if (!imatch) {
       throw new Error('[imatch] is required');
     }
@@ -264,7 +268,7 @@ class MatchWalker {
   }
 
   private observeValueNode(node: Element) {
-    const matched = this.props.matcher(node);
+    const matched = this.proceedMatch(node);
     const matches = this._matchesSet.get<MatchObject[]>(node);
     const hasMatched = matched && matched.length > 0;
     const hasMatches = matches && matches.length > 0;
