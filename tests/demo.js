@@ -10,10 +10,12 @@ function isValueNode(node) {
   return valueNodeTypes.indexOf(node.tagName) !== -1;
 }
 
+let widgetRoot;
 function isReject(node) {
   return (
     node.tagName === 'SCRIPT' ||
-    node.tagName === 'RC-C2D-MENU' ||
+    widgetRoot === node ||
+    widgetRoot.contains(node) ||
     isLinkNode(node.parentNode) ||
     isValueNode(node.parentNode)
   );
@@ -64,46 +66,7 @@ function processNode(node) {
   return null;
 }
 
-let widgetRoot;
-let hideTmeoutId;
-
-function hideWidget() {
-  hideTmeoutId = setTimeout(function() {
-    widgetRoot.style.display = 'none';
-  }, 512);
-}
-
-function showWidget(match) {
-  clearTimeout(hideTmeoutId);
-  widgetRoot.style.display = 'block';
-  widgetRoot.style.top = match.rect.top + window.pageYOffset + 'px';
-  widgetRoot.style.left = match.rect.right + window.pageXOffset + 5 + 'px';
-  if (match.context && match.context.number) {
-    widgetRoot.firstChild.innerHTML = match.context.number;
-  }
-}
-
-function initWidget() {
-  widgetRoot = document.createElement('RC-C2D-MENU');
-  document.body.appendChild(widgetRoot);
-  widgetRoot.innerHTML =
-    '<div style="border:1px solid #ccc; background:#eee; cursor:pointer;">I am menu</div>';
-  widgetRoot.style.position = 'absolute';
-  widgetRoot.style.display = 'none';
-  widgetRoot.style.zIndex = 10000;
-
-  widgetRoot.addEventListener('mouseenter', function() {
-    clearTimeout(hideTmeoutId);
-  });
-  widgetRoot.addEventListener('mouseleave', function() {
-    hideWidget();
-  });
-}
-
 function myMatcher(node) {
-  if (node === widgetRoot || widgetRoot.contains(node)) {
-    return;
-  }
   const treeWalker = document.createTreeWalker(
     node,
     NodeFilter.SHOW_ALL,
@@ -128,16 +91,26 @@ function myMatcher(node) {
 }
 
 window.addEventListener('load', function() {
-  initWidget();
+  widgetRoot = document.createElement('RC-C2D-MENU');
+  document.body.appendChild(widgetRoot);
+  widgetRoot.innerHTML =
+    '<div style="border:1px solid #ccc; background:#eee; cursor:pointer;">I am menu</div>';
+
+  const widget = new smatch.UIWidget({
+    root: widgetRoot
+  });
 
   const walker = new smatch.MatchWalker({
     root: document.body,
     matcher: myMatcher,
     hover(match) {
-      if (match) {
-        showWidget(match);
-      } else {
-        hideWidget();
+      if (!match) {
+        widget.hide();
+        return;
+      }
+      if (match.context && match.context.number) {
+        widgetRoot.firstChild.innerHTML = match.context.number;
+        widget.show(match.rect);
       }
     }
   });

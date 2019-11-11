@@ -19,3 +19,7 @@ export interface IWalkerProps {
   matcher: IMatcher;
   hover: IListener;
 }
+
+export interface IWidgetProps {
+  root: HTMLElement;
+}
