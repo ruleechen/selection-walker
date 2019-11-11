@@ -100,8 +100,7 @@ window.addEventListener('load', function() {
     root: widgetRoot
   });
 
-  const walker = new smatch.MatchWalker({
-    root: document.body,
+  const observer = new smatch.MatchObserver({
     matcher: myMatcher,
     hover(match) {
       if (!match) {
@@ -114,8 +113,8 @@ window.addEventListener('load', function() {
       }
     }
   });
-  walker.start();
-  window.mwalker = walker;
+  observer.observe(document.body);
+  window.mobserver = observer;
 });
 
 /*

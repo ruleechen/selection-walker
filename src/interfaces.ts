@@ -14,8 +14,7 @@ export interface IListener {
   (match: IMatch): void;
 }
 
-export interface IWalkerProps {
-  root: Node;
+export interface IObserverProps {
   matcher: IMatcher;
   hover: IListener;
 }

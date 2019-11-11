@@ -1,4 +1,4 @@
-import { IMatch, IWalkerProps } from './interfaces';
+import { IMatch, IObserverProps } from './interfaces';
 import MatchObject from './MatchObject';
 import DataSet from './DataSet';
 import {
@@ -9,8 +9,9 @@ import {
   LinkedRcIdPropName
 } from './utilities';
 
-class MatchWalker {
-  private _observer: MutationObserver;
+class MatchObserver {
+  private _currentRoot: Node;
+  private _mutationObserver: MutationObserver;
   private _matchesSet: DataSet = new DataSet();
   private _mouseenterHandler: EventListener;
   private _mouseleaveHandler: EventListener;
@@ -18,10 +19,7 @@ class MatchWalker {
   private _changeHandler: EventListener;
   private _lastHovered: MatchObject;
 
-  constructor(private props: IWalkerProps) {
-    if (!this.props.root) {
-      throw new Error('Prop [root] is required');
-    }
+  constructor(private props: IObserverProps) {
     if (!this.props.matcher) {
       throw new Error('Prop [matcher] is required');
     }
@@ -53,10 +51,14 @@ class MatchWalker {
     };
   }
 
-  start() {
-    this.observe(this.props.root);
-    this.bindValueNodes(this.props.root);
-    this.searchMatches(this.props.root);
+  observe(node: Node) {
+    if (this._currentRoot) {
+      throw new Error('Observer is running');
+    }
+    this.observeMutation(node);
+    this.bindValueNodes(node);
+    this.searchMatches(node);
+    this._currentRoot = node;
   }
 
   private searchMatches(node: Node) {
@@ -221,8 +223,8 @@ class MatchWalker {
     }
   }
 
-  private observe(node: Node) {
-    this._observer = new MutationObserver(mutationsList => {
+  private observeMutation(node: Node) {
+    this._mutationObserver = new MutationObserver(mutationsList => {
       mutationsList.forEach(mutations => {
         switch (mutations.type) {
           case 'characterData':
@@ -259,7 +261,7 @@ class MatchWalker {
         }
       });
     });
-    this._observer.observe(node, {
+    this._mutationObserver.observe(node, {
       attributes: false,
       characterData: true,
       childList: true,
@@ -283,12 +285,13 @@ class MatchWalker {
     }
   }
 
-  destroy() {
-    this._observer.disconnect();
-    this.stripMatches(this.props.root);
-    this.unbindValueNodes(this.props.root);
+  disconnect() {
+    this._mutationObserver.disconnect();
+    this.stripMatches(this._currentRoot);
+    this.unbindValueNodes(this._currentRoot);
     this._matchesSet.clear();
+    this._currentRoot = null;
   }
 }
 
-export default MatchWalker;
+export default MatchObserver;
