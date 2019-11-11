@@ -12,7 +12,7 @@ import {
 class MatchObserver {
   private _currentRoot: Node;
   private _mutationObserver: MutationObserver;
-  private _matchesSet: DataSet = new DataSet();
+  private _matchesSet: DataSet<MatchObject[]>;
   private _mouseenterHandler: EventListener;
   private _mouseleaveHandler: EventListener;
   private _mousemoveHandler: EventListener;
@@ -26,6 +26,7 @@ class MatchObserver {
     if (!this.props.hover) {
       throw new Error('Prop [hover] is required');
     }
+    this._matchesSet = new DataSet<MatchObject[]>();
     // event handlers
     // ev.target is what triggers the event dispatcher to trigger
     // ev.currentTarget is what you assigned your listener to
@@ -86,7 +87,7 @@ class MatchObserver {
       imatch instanceof MatchObject ? imatch : new MatchObject(imatch);
     const target = match.getEventTarget();
     // cache matches
-    const matches = this._matchesSet.get<MatchObject[]>(target, []);
+    const matches = this._matchesSet.get(target, []);
     matches.push(match); //TODO: duplicate risk
     this._matchesSet.set(target, matches);
     // attach events
@@ -101,7 +102,7 @@ class MatchObserver {
       throw new Error('[match] is required');
     }
     const target = match.getEventTarget();
-    let matches = this._matchesSet.get<MatchObject[]>(target);
+    let matches = this._matchesSet.get(target);
     if (matches) {
       matches = matches.filter(x => x !== match);
       if (matches.length) {
@@ -139,7 +140,7 @@ class MatchObserver {
         }
         // remove matchs
         if (target) {
-          const matches = this._matchesSet.get<MatchObject[]>(target);
+          const matches = this._matchesSet.get(target);
           if (matches) {
             matches
               .filter(match => {
@@ -187,7 +188,7 @@ class MatchObserver {
   }
 
   private buildRect(node: Element) {
-    const matches = this._matchesSet.get<MatchObject[]>(node);
+    const matches = this._matchesSet.get(node);
     if (matches) {
       matches.forEach(match => {
         match.buildRect();
@@ -196,7 +197,7 @@ class MatchObserver {
   }
 
   private matchRect(node: Element, ev: MouseEvent) {
-    const matches = this._matchesSet.get<MatchObject[]>(node);
+    const matches = this._matchesSet.get(node);
     if (matches) {
       const hovered = matches.find(m => {
         return m.isMatch(ev.x, ev.y);
@@ -271,7 +272,7 @@ class MatchObserver {
 
   private observeValueNode(node: Element) {
     const matched = this.proceedMatch(node);
-    const matches = this._matchesSet.get<MatchObject[]>(node);
+    const matches = this._matchesSet.get(node);
     const hasMatched = matched && matched.length > 0;
     const hasMatches = matches && matches.length > 0;
     if (hasMatched !== hasMatches) {

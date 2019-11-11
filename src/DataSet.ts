@@ -1,29 +1,29 @@
 import { getRcId } from './utilities';
 
-class DataSet {
-  static formalizeKey(key: string | Element, createNew: boolean) {
+class DataSet<T> {
+  static formalizeKey(key: string | Element, createNew: boolean): string {
     const theKey = key instanceof Element ? getRcId(key, createNew) : key;
     return theKey;
   }
 
-  private _store: { [key: string]: any } = {};
+  private _store: { [key: string]: T } = {};
 
-  get<T>(key: string | Element, defVal: T = null): T {
+  get(key: string | Element, defVal: T = null): T {
     const theKey = DataSet.formalizeKey(key, false);
     return theKey in this._store ? this._store[theKey] : defVal;
   }
 
-  set<T>(key: string | Element, value: T): any {
+  set(key: string | Element, value: T) {
     const theKey = DataSet.formalizeKey(key, true);
     this._store[theKey] = value;
   }
 
-  remove(key: string | Element) {
+  remove(key: string | Element): boolean {
     const theKey = DataSet.formalizeKey(key, false);
     return delete this._store[theKey];
   }
 
-  keys() {
+  keys(): string[] {
     return Object.keys(this._store);
   }
 

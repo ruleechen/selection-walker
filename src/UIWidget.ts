@@ -1,5 +1,7 @@
 import { IWidgetProps } from './interfaces';
 
+const MaxZIndex = 2147483647;
+
 class UIWidget {
   private _root: HTMLElement;
   private _timeoutId: number;
@@ -13,9 +15,9 @@ class UIWidget {
   }
 
   private init() {
-    this._root.style.position = 'absolute';
     this._root.style.display = 'none';
-    this._root.style.zIndex = '100000';
+    this._root.style.position = 'absolute';
+    this._root.style.zIndex = MaxZIndex.toString();
     this._root.addEventListener('mouseenter', () => {
       clearTimeout(this._timeoutId);
     });
