@@ -7,7 +7,7 @@ export interface IMatch {
 }
 
 export interface IMatcher {
-  (node: Node): IMatch[];
+  (node: Node, children: boolean): IMatch[];
 }
 
 export interface IListener {
@@ -17,6 +17,7 @@ export interface IListener {
 export interface IObserverProps {
   matcher: IMatcher;
   hover: IListener;
+  attributeFilter?: string[];
 }
 
 export interface IWidgetProps {

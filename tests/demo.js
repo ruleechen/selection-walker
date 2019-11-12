@@ -16,8 +16,8 @@ function isReject(node) {
     node.tagName === 'SCRIPT' ||
     widgetRoot === node ||
     widgetRoot.contains(node) ||
-    isLinkNode(node.parentNode) ||
-    isValueNode(node.parentNode)
+    (node.parentNode && isLinkNode(node.parentNode)) ||
+    (node.parentNode && isValueNode(node.parentNode))
   );
 }
 
@@ -66,7 +66,7 @@ function processNode(node) {
   return null;
 }
 
-function myMatcher(node) {
+function myMatcher(node, children) {
   const treeWalker = document.createTreeWalker(
     node,
     NodeFilter.SHOW_ALL,
@@ -83,6 +83,9 @@ function myMatcher(node) {
       const res = processNode(current);
       if (res && res.length) {
         founds = founds.concat(res);
+      }
+      if (!children) {
+        break;
       }
       current = treeWalker.nextNode();
     }
@@ -111,7 +114,8 @@ window.addEventListener('load', function() {
         widgetRoot.firstChild.innerHTML = match.context.number;
         widget.show(match.rect);
       }
-    }
+    },
+    attributeFilter: ['href']
   });
   observer.observe(document.body);
   window.mobserver = observer;

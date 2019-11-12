@@ -62,11 +62,11 @@ class MatchObserver {
     this._currentRoot = node;
   }
 
-  private searchMatches(node: Node) {
+  private searchMatches(node: Node, children: boolean = true) {
     if (!node) {
       throw new Error('[node] is required');
     }
-    const matched = this.proceedMatch(node);
+    const matched = this.proceedMatch(node, children);
     if (matched) {
       matched.forEach(match => {
         this.addMatch(match);
@@ -74,8 +74,8 @@ class MatchObserver {
     }
   }
 
-  private proceedMatch(node: Node): IMatch[] {
-    const matched = this.props.matcher(node);
+  private proceedMatch(node: Node, children: boolean = true): IMatch[] {
+    const matched = this.props.matcher(node, children);
     return matched;
   }
 
@@ -115,7 +115,7 @@ class MatchObserver {
     }
   }
 
-  stripMatches(node: Node) {
+  stripMatches(node: Node, children: boolean = true) {
     if (!node) {
       throw new Error('[node] is required');
     }
@@ -151,6 +151,9 @@ class MatchObserver {
               });
           }
         }
+      }
+      if (!children) {
+        break;
       }
       current = treeWalker.nextNode();
     }
@@ -239,11 +242,22 @@ class MatchObserver {
             }
             break;
 
-          case 'childList':
-            // here the 'target' is the parent of node being removed/added
-            const valueNode2 = upFirstValueNode(mutations.target);
+          case 'attributes':
+            // re-build the 'target' node's matches. its children is not need
+            const valueNode2 = upFirstValueNode(mutations.target.parentNode);
             if (valueNode2) {
               this.observeValueNode(valueNode2);
+            } else {
+              this.stripMatches(mutations.target, false);
+              this.searchMatches(mutations.target, false);
+            }
+            break;
+
+          case 'childList':
+            // here the 'target' is the parent of node being removed/added
+            const valueNode3 = upFirstValueNode(mutations.target);
+            if (valueNode3) {
+              this.observeValueNode(valueNode3);
             } else {
               mutations.removedNodes.forEach(node => {
                 this.unbindValueNodes(node);
@@ -256,14 +270,14 @@ class MatchObserver {
             }
             break;
 
-          case 'attributes':
           default:
             break;
         }
       });
     });
     this._mutationObserver.observe(node, {
-      attributes: false,
+      attributeFilter: this.props.attributeFilter,
+      attributes: !!this.props.attributeFilter,
       characterData: true,
       childList: true,
       subtree: true
