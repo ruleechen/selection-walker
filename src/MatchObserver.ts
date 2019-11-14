@@ -1,4 +1,4 @@
-import { IMatch, IObserverProps } from './interfaces';
+import { MatchProps, ObserverProps } from './interfaces';
 import MatchObject from './MatchObject';
 import DataSet from './DataSet';
 import {
@@ -19,7 +19,7 @@ class MatchObserver {
   private _changeHandler: EventListener;
   private _lastHovered: MatchObject;
 
-  constructor(private props: IObserverProps) {
+  constructor(private props: ObserverProps) {
     if (!this.props.matcher) {
       throw new Error('Prop [matcher] is required');
     }
@@ -32,22 +32,22 @@ class MatchObserver {
     // ev.currentTarget is what you assigned your listener to
     this._mouseenterHandler = (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
-        this.buildRect(ev.target as Element);
+        this._buildRect(ev.target as Element);
       }
     };
     this._mouseleaveHandler = (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
-        this.hideHovered();
+        this._hideHovered();
       }
     };
     this._mousemoveHandler = (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
-        this.matchRect(ev.target as Element, ev);
+        this._matchRect(ev.target as Element, ev);
       }
     };
     this._changeHandler = (ev: Event) => {
       if (ev.target === ev.currentTarget) {
-        this.observeValueNode(ev.target as Element);
+        this._observeValueNode(ev.target as Element);
       }
     };
   }
@@ -56,17 +56,17 @@ class MatchObserver {
     if (this._currentRoot) {
       throw new Error('Observer is running');
     }
-    this.observeMutation(node);
-    this.bindValueNodes(node);
-    this.searchMatches(node);
+    this._observeMutation(node);
+    this._bindValueNodes(node);
+    this._searchMatches(node);
     this._currentRoot = node;
   }
 
-  private searchMatches(node: Node, children: boolean = true) {
+  private _searchMatches(node: Node, children: boolean = true) {
     if (!node) {
       throw new Error('[node] is required');
     }
-    const matched = this.proceedMatch(node, children);
+    const matched = this._proceedMatch(node, children);
     if (matched) {
       matched.forEach(match => {
         this.addMatch(match);
@@ -74,25 +74,27 @@ class MatchObserver {
     }
   }
 
-  private proceedMatch(node: Node, children: boolean = true): IMatch[] {
+  private _proceedMatch(node: Node, children: boolean = true): MatchProps[] {
     const matched = this.props.matcher(node, children);
     return matched;
   }
 
-  addMatch(imatch: IMatch | MatchObject): MatchObject {
-    if (!imatch) {
-      throw new Error('[imatch] is required');
+  addMatch(matchProps: MatchProps | MatchObject): MatchObject {
+    if (!matchProps) {
+      throw new Error('[matchProps] is required');
     }
     const match =
-      imatch instanceof MatchObject ? imatch : new MatchObject(imatch);
+      matchProps instanceof MatchObject
+        ? matchProps
+        : new MatchObject(matchProps);
     const target = match.getEventTarget();
     // cache matches
     const matches = this._matchesSet.get(target, []);
     matches.push(match); //TODO: duplicate risk
     this._matchesSet.set(target, matches);
     // attach events
-    this.removeNodeEvents(target);
-    this.addNodeEvents(target);
+    this._removeNodeEvents(target);
+    this._addNodeEvents(target);
     // ret
     return match;
   }
@@ -108,7 +110,7 @@ class MatchObserver {
       if (matches.length) {
         this._matchesSet.set(target, matches);
       } else {
-        this.removeNodeEvents(target);
+        this._removeNodeEvents(target);
         this._matchesSet.remove(target);
         target.removeAttribute(RcIdAttrName);
       }
@@ -160,19 +162,19 @@ class MatchObserver {
   }
 
   // https://api.jquery.com/mouseenter/
-  private addNodeEvents(node: Element) {
+  private _addNodeEvents(node: Element) {
     node.addEventListener('mouseenter', this._mouseenterHandler);
     node.addEventListener('mouseleave', this._mouseleaveHandler);
     node.addEventListener('mousemove', this._mousemoveHandler);
   }
 
-  private removeNodeEvents(node: Element) {
+  private _removeNodeEvents(node: Element) {
     node.removeEventListener('mouseenter', this._mouseenterHandler);
     node.removeEventListener('mouseleave', this._mouseleaveHandler);
     node.removeEventListener('mousemove', this._mousemoveHandler);
   }
 
-  private bindValueNodes(node: Node) {
+  private _bindValueNodes(node: Node) {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
       valueNodes.forEach(node => {
@@ -181,7 +183,7 @@ class MatchObserver {
     }
   }
 
-  private unbindValueNodes(node: Node) {
+  private _unbindValueNodes(node: Node) {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
       valueNodes.forEach(node => {
@@ -190,7 +192,7 @@ class MatchObserver {
     }
   }
 
-  private buildRect(node: Element) {
+  private _buildRect(node: Element) {
     const matches = this._matchesSet.get(node);
     if (matches) {
       matches.forEach(match => {
@@ -199,35 +201,35 @@ class MatchObserver {
     }
   }
 
-  private matchRect(node: Element, ev: MouseEvent) {
+  private _matchRect(node: Element, ev: MouseEvent) {
     const matches = this._matchesSet.get(node);
     if (matches) {
       const hovered = matches.find(m => {
         return m.isMatch(ev.x, ev.y);
       });
       if (hovered) {
-        this.showHovered(hovered);
+        this._showHovered(hovered);
       } else {
-        this.hideHovered();
+        this._hideHovered();
       }
     }
   }
 
-  private showHovered(hovered: MatchObject) {
+  private _showHovered(hovered: MatchObject) {
     if (!this._lastHovered || this._lastHovered !== hovered) {
       this._lastHovered = hovered;
       this.props.hover(hovered);
     }
   }
 
-  private hideHovered() {
+  private _hideHovered() {
     if (this._lastHovered) {
       this._lastHovered = null;
       this.props.hover(null);
     }
   }
 
-  private observeMutation(node: Node) {
+  private _observeMutation(node: Node) {
     this._mutationObserver = new MutationObserver(mutationsList => {
       mutationsList.forEach(mutations => {
         switch (mutations.type) {
@@ -235,10 +237,10 @@ class MatchObserver {
             // here the 'target' is always a text node
             const valueNode1 = upFirstValueNode(mutations.target.parentNode);
             if (valueNode1) {
-              this.observeValueNode(valueNode1);
+              this._observeValueNode(valueNode1);
             } else {
               this.stripMatches(mutations.target);
-              this.searchMatches(mutations.target);
+              this._searchMatches(mutations.target);
             }
             break;
 
@@ -246,10 +248,10 @@ class MatchObserver {
             // re-build the 'target' node's matches. its children is not need
             const valueNode2 = upFirstValueNode(mutations.target.parentNode);
             if (valueNode2) {
-              this.observeValueNode(valueNode2);
+              this._observeValueNode(valueNode2);
             } else {
               this.stripMatches(mutations.target, false);
-              this.searchMatches(mutations.target, false);
+              this._searchMatches(mutations.target, false);
             }
             break;
 
@@ -257,15 +259,15 @@ class MatchObserver {
             // here the 'target' is the parent of node being removed/added
             const valueNode3 = upFirstValueNode(mutations.target);
             if (valueNode3) {
-              this.observeValueNode(valueNode3);
+              this._observeValueNode(valueNode3);
             } else {
               mutations.removedNodes.forEach(node => {
-                this.unbindValueNodes(node);
+                this._unbindValueNodes(node);
                 this.stripMatches(node);
               });
               mutations.addedNodes.forEach(node => {
-                this.bindValueNodes(node);
-                this.searchMatches(node);
+                this._bindValueNodes(node);
+                this._searchMatches(node);
               });
             }
             break;
@@ -284,8 +286,8 @@ class MatchObserver {
     });
   }
 
-  private observeValueNode(node: Element) {
-    const matched = this.proceedMatch(node);
+  private _observeValueNode(node: Element) {
+    const matched = this._proceedMatch(node);
     const matches = this._matchesSet.get(node);
     const hasMatched = matched && matched.length > 0;
     const hasMatches = matches && matches.length > 0;
@@ -303,7 +305,7 @@ class MatchObserver {
   disconnect() {
     this._mutationObserver.disconnect();
     this.stripMatches(this._currentRoot);
-    this.unbindValueNodes(this._currentRoot);
+    this._unbindValueNodes(this._currentRoot);
     this._matchesSet.clear();
     this._currentRoot = null;
   }

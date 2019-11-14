@@ -1,4 +1,4 @@
-export interface IMatch {
+export interface MatchProps {
   startsNode: Node;
   startsAt: number;
   endsNode: Node;
@@ -6,20 +6,12 @@ export interface IMatch {
   context: any;
 }
 
-export interface IMatcher {
-  (node: Node, children: boolean): IMatch[];
-}
-
-export interface IListener {
-  (match: IMatch): void;
-}
-
-export interface IObserverProps {
-  matcher: IMatcher;
-  hover: IListener;
+export interface ObserverProps {
+  matcher: (node: Node, children: boolean) => MatchProps[];
+  hover: (match: MatchProps) => void;
   attributeFilter?: string[];
 }
 
-export interface IWidgetProps {
+export interface WidgetProps {
   root: HTMLElement;
 }

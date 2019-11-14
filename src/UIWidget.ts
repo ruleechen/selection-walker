@@ -1,4 +1,4 @@
-import { IWidgetProps } from './interfaces';
+import { WidgetProps } from './interfaces';
 
 const MaxZIndex = 2147483647;
 
@@ -6,7 +6,7 @@ class UIWidget {
   private _root: HTMLElement;
   private _timeoutId: number;
 
-  constructor(private props: IWidgetProps) {
+  constructor(private props: WidgetProps) {
     if (!this.props.root) {
       throw new Error('Prop [root] is required');
     }

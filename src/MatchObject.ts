@@ -1,11 +1,11 @@
-import { IMatch } from './interfaces';
+import { MatchProps } from './interfaces';
 import { getEventElement, getRcId, LinkedRcIdPropName } from './utilities';
 
-class MatchObject implements IMatch {
+class MatchObject implements MatchProps {
   private _rect: ClientRect;
   private _target: Element;
 
-  constructor(private props: IMatch) {
+  constructor(private props: MatchProps) {
     if (!this.props.startsNode) {
       throw new Error('[startsNode] is required');
     }
