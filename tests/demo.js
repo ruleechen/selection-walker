@@ -105,15 +105,14 @@ window.addEventListener('load', function() {
 
   const observer = new smatch.MatchObserver({
     matcher: myMatcher,
-    hover(target, match) {
-      if (!match) {
-        widget.hide();
-        return;
-      }
+    onHoverIn(target, match) {
       if (match.context && match.context.number) {
         widgetRoot.firstChild.innerHTML = match.context.number;
         widget.show(match.rect);
       }
+    },
+    onHoverOut(target) {
+      widget.hide();
     },
     attributeFilter: ['href']
   });

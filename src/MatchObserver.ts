@@ -23,9 +23,6 @@ class MatchObserver {
     if (!this.props.matcher) {
       throw new Error('Prop [matcher] is required');
     }
-    if (!this.props.hover) {
-      throw new Error('Prop [hover] is required');
-    }
     this._matchesSet = new DataSet<MatchObject[]>();
     // event handlers
     // ev.target is what triggers the event dispatcher to trigger
@@ -218,14 +215,18 @@ class MatchObserver {
   private _showHovered(target: Element, hovered: MatchObject) {
     if (!this._lastHovered || this._lastHovered !== hovered) {
       this._lastHovered = hovered;
-      this.props.hover(target, hovered);
+      if (this.props.onHoverIn) {
+        this.props.onHoverIn(target, hovered);
+      }
     }
   }
 
   private _hideHovered(target: Element) {
     if (this._lastHovered) {
       this._lastHovered = null;
-      this.props.hover(target);
+      if (this.props.onHoverOut) {
+        this.props.onHoverOut(target);
+      }
     }
   }
 
