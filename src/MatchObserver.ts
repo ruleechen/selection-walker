@@ -37,7 +37,7 @@ class MatchObserver {
     };
     this._mouseleaveHandler = (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
-        this._hideHovered();
+        this._hideHovered(ev.target as Element);
       }
     };
     this._mousemoveHandler = (ev: MouseEvent) => {
@@ -192,8 +192,8 @@ class MatchObserver {
     }
   }
 
-  private _buildRect(node: Element) {
-    const matches = this._matchesSet.get(node);
+  private _buildRect(target: Element) {
+    const matches = this._matchesSet.get(target);
     if (matches) {
       matches.forEach(match => {
         match.buildRect();
@@ -201,31 +201,31 @@ class MatchObserver {
     }
   }
 
-  private _matchRect(node: Element, ev: MouseEvent) {
-    const matches = this._matchesSet.get(node);
+  private _matchRect(target: Element, ev: MouseEvent) {
+    const matches = this._matchesSet.get(target);
     if (matches) {
       const hovered = matches.find(m => {
         return m.isMatch(ev.x, ev.y);
       });
       if (hovered) {
-        this._showHovered(hovered);
+        this._showHovered(target, hovered);
       } else {
-        this._hideHovered();
+        this._hideHovered(target);
       }
     }
   }
 
-  private _showHovered(hovered: MatchObject) {
+  private _showHovered(target: Element, hovered: MatchObject) {
     if (!this._lastHovered || this._lastHovered !== hovered) {
       this._lastHovered = hovered;
-      this.props.hover(hovered);
+      this.props.hover(target, hovered);
     }
   }
 
-  private _hideHovered() {
+  private _hideHovered(target: Element) {
     if (this._lastHovered) {
       this._lastHovered = null;
-      this.props.hover(null);
+      this.props.hover(target);
     }
   }
 

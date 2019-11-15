@@ -8,7 +8,7 @@ export interface MatchProps {
 
 export interface ObserverProps {
   matcher: (node: Node, children: boolean) => MatchProps[];
-  hover: (match: MatchProps) => void;
+  hover: (target: Element, match?: MatchProps) => void;
   attributeFilter?: string[];
 }
 

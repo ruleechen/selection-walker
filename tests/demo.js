@@ -105,7 +105,7 @@ window.addEventListener('load', function() {
 
   const observer = new smatch.MatchObserver({
     matcher: myMatcher,
-    hover(match) {
+    hover(target, match) {
       if (!match) {
         widget.hide();
         return;

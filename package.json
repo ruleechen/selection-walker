@@ -1,7 +1,7 @@
 {
   "name": "smatch",
   "version": "1.0.0",
-  "main": "build/index.js",
+  "main": "src/index.js",
   "repository": "https://github.com/ruleechen/smatch.git",
   "author": "Rulee Chen <rulee@live.cn>",
   "scripts": {
