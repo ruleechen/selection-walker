@@ -19,8 +19,8 @@ class MatchObserver {
   private _changeHandler: EventListener;
   private _lastHovered: MatchObject;
 
-  constructor(private props: ObserverProps) {
-    if (!this.props.matcher) {
+  constructor(private _props: ObserverProps) {
+    if (!this._props.matcher) {
       throw new Error('Prop [matcher] is required');
     }
     this._matchesSet = new DataSet<MatchObject[]>();
@@ -72,7 +72,7 @@ class MatchObserver {
   }
 
   private _proceedMatch(node: Node, children: boolean = true): MatchProps[] {
-    const matched = this.props.matcher(node, children);
+    const matched = this._props.matcher(node, children);
     return matched;
   }
 
@@ -215,8 +215,8 @@ class MatchObserver {
   private _showHovered(target: Element, hovered: MatchObject) {
     if (!this._lastHovered || this._lastHovered !== hovered) {
       this._lastHovered = hovered;
-      if (this.props.onHoverIn) {
-        this.props.onHoverIn(target, hovered);
+      if (this._props.onHoverIn) {
+        this._props.onHoverIn(target, hovered);
       }
     }
   }
@@ -224,49 +224,49 @@ class MatchObserver {
   private _hideHovered(target: Element) {
     if (this._lastHovered) {
       this._lastHovered = null;
-      if (this.props.onHoverOut) {
-        this.props.onHoverOut(target);
+      if (this._props.onHoverOut) {
+        this._props.onHoverOut(target);
       }
     }
   }
 
   private _observeMutation(node: Node) {
-    this._mutationObserver = new MutationObserver(mutationsList => {
-      mutationsList.forEach(mutations => {
-        switch (mutations.type) {
+    this._mutationObserver = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        switch (mutation.type) {
           case 'characterData':
             // here the 'target' is always a text node
-            const valueNode1 = upFirstValueNode(mutations.target.parentNode);
+            const valueNode1 = upFirstValueNode(mutation.target.parentNode);
             if (valueNode1) {
               this._observeValueNode(valueNode1);
             } else {
-              this.stripMatches(mutations.target);
-              this._searchMatches(mutations.target);
+              this.stripMatches(mutation.target);
+              this._searchMatches(mutation.target);
             }
             break;
 
           case 'attributes':
             // re-build the 'target' node's matches. its children is not need
-            const valueNode2 = upFirstValueNode(mutations.target.parentNode);
+            const valueNode2 = upFirstValueNode(mutation.target.parentNode);
             if (valueNode2) {
               this._observeValueNode(valueNode2);
             } else {
-              this.stripMatches(mutations.target, false);
-              this._searchMatches(mutations.target, false);
+              this.stripMatches(mutation.target, false);
+              this._searchMatches(mutation.target, false);
             }
             break;
 
           case 'childList':
             // here the 'target' is the parent of node being removed/added
-            const valueNode3 = upFirstValueNode(mutations.target);
+            const valueNode3 = upFirstValueNode(mutation.target);
             if (valueNode3) {
               this._observeValueNode(valueNode3);
             } else {
-              mutations.removedNodes.forEach(node => {
+              mutation.removedNodes.forEach(node => {
                 this._unbindValueNodes(node);
                 this.stripMatches(node);
               });
-              mutations.addedNodes.forEach(node => {
+              mutation.addedNodes.forEach(node => {
                 this._bindValueNodes(node);
                 this._searchMatches(node);
               });
@@ -279,8 +279,8 @@ class MatchObserver {
       });
     });
     this._mutationObserver.observe(node, {
-      attributeFilter: this.props.attributeFilter,
-      attributes: !!this.props.attributeFilter,
+      attributeFilter: this._props.attributeFilter,
+      attributes: !!this._props.attributeFilter,
       characterData: true,
       childList: true,
       subtree: true
