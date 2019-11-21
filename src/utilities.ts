@@ -26,7 +26,7 @@ export function getEventElement(node: Node): Element {
     throw new Error('[node] is required');
   }
   const element =
-    node instanceof Element ? (node as Element) : (node.parentNode as Element);
+    node instanceof Element ? (node as Element) : node.parentElement;
   return element;
 }
 

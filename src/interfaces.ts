@@ -12,7 +12,3 @@ export interface ObserverProps {
   onHoverOut?: (target: Element) => void;
   attributeFilter?: string[];
 }
-
-export interface WidgetProps {
-  root: HTMLElement;
-}

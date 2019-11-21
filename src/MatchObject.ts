@@ -5,11 +5,11 @@ class MatchObject implements MatchProps {
   private _rect: ClientRect;
   private _target: Element;
 
-  constructor(private props: MatchProps) {
-    if (!this.props.startsNode) {
+  constructor(private _props: MatchProps) {
+    if (!this._props.startsNode) {
       throw new Error('[startsNode] is required');
     }
-    if (!this.props.endsNode) {
+    if (!this._props.endsNode) {
       throw new Error('[endsNode] is required');
     }
     // setup link
@@ -72,19 +72,19 @@ class MatchObject implements MatchProps {
   }
 
   get startsNode(): Node {
-    return this.props.startsNode;
+    return this._props.startsNode;
   }
 
   get startsAt(): number {
-    return this.props.startsAt;
+    return this._props.startsAt;
   }
 
   get endsNode(): Node {
-    return this.props.endsNode;
+    return this._props.endsNode;
   }
 
   get endsAt(): number {
-    return this.props.endsAt;
+    return this._props.endsAt;
   }
 
   get rect(): ClientRect {
@@ -92,7 +92,7 @@ class MatchObject implements MatchProps {
   }
 
   get context(): any {
-    return this.props.context;
+    return this._props.context;
   }
 }
 

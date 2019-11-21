@@ -1,20 +1,18 @@
-import { WidgetProps } from './interfaces';
-
 const MaxZIndex = 2147483647;
 
 class UIWidget {
-  private _root: HTMLElement;
-  private _timeoutId: number;
+  _root;
+  _timeoutId;
 
-  constructor(private props: WidgetProps) {
-    if (!this.props.root) {
+  constructor({ root }) {
+    if (!root) {
       throw new Error('Prop [root] is required');
     }
-    this._root = this.props.root;
-    this.init();
+    this._root = root;
+    this._init();
   }
 
-  private init() {
+  _init() {
     this._root.style.display = 'none';
     this._root.style.position = 'absolute';
     this._root.style.zIndex = MaxZIndex.toString();
@@ -26,14 +24,14 @@ class UIWidget {
     });
   }
 
-  show(rect: ClientRect) {
+  show(rect) {
     clearTimeout(this._timeoutId);
     this._root.style.display = 'block';
     this._root.style.top = rect.top + window.pageYOffset + 'px';
     this._root.style.left = rect.right + window.pageXOffset + 5 + 'px';
   }
 
-  hide(timeout: number = 512) {
+  hide(timeout = 512) {
     if (timeout) {
       this._timeoutId = setTimeout(() => {
         this._root.style.display = 'none';
@@ -47,5 +45,3 @@ class UIWidget {
     return this._root;
   }
 }
-
-export default UIWidget;

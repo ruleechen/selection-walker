@@ -1,8 +1,8 @@
-function isLinkNode(node) {
-  const isMatched =
-    node.tagName === 'A' &&
-    (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'));
-  return isMatched;
+function phoneDetector(value) {
+  const numbers = libphonenumber.findNumbers(value, {
+    v2: true
+  });
+  return numbers;
 }
 
 const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
@@ -10,77 +10,92 @@ function isValueNode(node) {
   return valueNodeTypes.indexOf(node.tagName) !== -1;
 }
 
-let widgetRoot;
+function isAnchorNode(node) {
+  const isMatched =
+    node.tagName === 'A' &&
+    (node.matches('a[href^="tel:"]') || node.matches('a[href^="sms:"]'));
+  return isMatched;
+}
+
+const RC_C2D_NUMBER_TAGNAME = 'RC-C2D-NUMBER';
+function isC2dNumberNode(node) {
+  return node.tagName === RC_C2D_NUMBER_TAGNAME;
+}
+
 function isReject(node) {
   return (
-    node.tagName === 'SCRIPT' ||
-    widgetRoot === node ||
-    widgetRoot.contains(node) ||
-    (node.parentNode && isLinkNode(node.parentNode)) ||
-    (node.parentNode && isValueNode(node.parentNode))
+    node.parentElement &&
+    (isAnchorNode(node.parentNode) ||
+      isValueNode(node.parentNode) ||
+      isC2dNumberNode(node.parentElement))
   );
 }
 
-function processNode(node) {
-  if (isValueNode(node)) {
-    const numbers = libphonenumber.findNumbers(node.value, {
-      v2: true
-    });
-    return numbers.map(function(item) {
-      return {
-        startsNode: node,
-        startsAt: item.startsAt,
-        endsNode: node,
-        endsAt: item.endsAt,
-        context: item.number
-      };
-    });
-  }
-  if (isLinkNode(node)) {
-    return [
-      {
-        startsNode: node,
-        startsAt: 0,
-        endsNode: node,
-        endsAt: node.innerText.length,
-        context: {
-          number: node.href
-        }
+function processNode(node, detector) {
+  const matches = [];
+  if (node.nodeType === 1) {
+    const element = node;
+    if (isValueNode(element)) {
+      const valueElement = element;
+      const items = detector(valueElement.value);
+      items.forEach(item => {
+        matches.push({
+          node: valueElement,
+          startsAt: item.startsAt,
+          endsAt: item.endsAt,
+          context: item.number
+        });
+      });
+    } else if (isAnchorNode(element)) {
+      const anchorElement = element;
+      const items = detector(anchorElement.href);
+      if (items.length) {
+        matches.push({
+          node: anchorElement,
+          startsAt: 0,
+          endsAt: anchorElement.innerText.length,
+          context: items[0].number
+        });
       }
-    ];
-  }
-  if (node.nodeType === 3) {
-    const numbers = libphonenumber.findNumbers(node.data, {
-      v2: true
-    });
-    return numbers.map(function(item) {
-      return {
-        startsNode: node,
+    } else if (isC2dNumberNode(element)) {
+      const innerText = element.innerText;
+      matches.push({
+        node: element,
+        startsAt: 0,
+        endsAt: innerText.length,
+        context: {
+          number: innerText
+        }
+      });
+    }
+  } else if (node.nodeType === 3) {
+    const textNode = node;
+    const items = detector(textNode.data);
+    items.forEach(item => {
+      matches.push({
+        node: textNode,
         startsAt: item.startsAt,
-        endsNode: node,
         endsAt: item.endsAt,
         context: item.number
-      };
+      });
     });
   }
-  return null;
+  return matches;
 }
 
-function myMatcher(node, children) {
-  const treeWalker = document.createTreeWalker(
-    node,
-    NodeFilter.SHOW_ALL,
-    function(nextNode) {
-      return isReject(nextNode)
+function myMatcher(root, children) {
+  const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_ALL, {
+    acceptNode: function(node) {
+      return isReject(node)
         ? NodeFilter.FILTER_REJECT
         : NodeFilter.FILTER_ACCEPT;
     }
-  );
+  });
   let founds = [];
   let current = treeWalker.currentNode;
   if (!isReject(current)) {
     while (current) {
-      const res = processNode(current);
+      const res = processNode(current, phoneDetector);
       if (res && res.length) {
         founds = founds.concat(res);
       }
@@ -94,17 +109,28 @@ function myMatcher(node, children) {
 }
 
 window.addEventListener('load', function() {
-  widgetRoot = document.createElement('RC-C2D-MENU');
+  const widgetRoot = document.createElement('RC-C2D-MENU');
   document.body.appendChild(widgetRoot);
   widgetRoot.innerHTML =
     '<div style="border:1px solid #ccc; background:#eee; cursor:pointer;">I am menu</div>';
 
-  const widget = new smatch.UIWidget({
+  const widget = new UIWidget({
     root: widgetRoot
   });
 
   const observer = new smatch.MatchObserver({
-    matcher: myMatcher,
+    attributeFilter: ['href'],
+    matcher: (node, children) => {
+      return myMatcher(node, children).map(x => {
+        return {
+          startsNode: x.node,
+          startsAt: x.startsAt,
+          endsNode: x.node,
+          endsAt: x.endsAt,
+          context: x.context
+        };
+      });
+    },
     onHoverIn(target, match) {
       if (match.context && match.context.number) {
         widgetRoot.firstChild.innerHTML = match.context.number;
@@ -113,8 +139,7 @@ window.addEventListener('load', function() {
     },
     onHoverOut(target) {
       widget.hide();
-    },
-    attributeFilter: ['href']
+    }
   });
   observer.observe(document.body);
   window.mobserver = observer;
