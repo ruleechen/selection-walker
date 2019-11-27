@@ -82,3 +82,15 @@ export function upFirstValueNode(node: Node, levels: number = 3): Element {
   }
   return null;
 }
+
+export function throttled(delay: number, func: (...args) => any) {
+  let lastCall = 0;
+  return function(...args) {
+    const now = new Date().getTime();
+    if (now - lastCall < delay) {
+      return;
+    }
+    lastCall = now;
+    return func(...args);
+  };
+}

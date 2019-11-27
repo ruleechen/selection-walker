@@ -3,6 +3,7 @@ import MatchObject from './MatchObject';
 import DataSet from './DataSet';
 import {
   getRcId,
+  throttled,
   queryValueNodes,
   upFirstValueNode,
   RcIdAttrName,
@@ -37,11 +38,11 @@ class MatchObserver {
         this._hideHovered(ev.target as Element);
       }
     };
-    this._mousemoveHandler = (ev: MouseEvent) => {
+    this._mousemoveHandler = throttled(100, (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
         this._matchRect(ev.target as Element, ev);
       }
-    };
+    });
     this._changeHandler = (ev: Event) => {
       if (ev.target === ev.currentTarget) {
         this._observeValueNode(ev.target as Element);
