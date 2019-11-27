@@ -51,10 +51,8 @@ export function isNodeInDom(node: Node): boolean {
   return false;
 }
 
-export function isValueNode(node: Node): boolean {
-  return node instanceof Element
-    ? valueNodeTypes.indexOf(node.tagName) !== -1
-    : false;
+export function isValueNode(node: Element): boolean {
+  return valueNodeTypes.indexOf(node.tagName) !== -1;
 }
 
 export function queryValueNodes(node: Element): Element[] {
@@ -73,8 +71,11 @@ export function upFirstValueNode(node: Node, levels: number = 3): Element {
   let search = 0;
   let current = node;
   while (current && search < levels) {
-    if (isValueNode(current)) {
-      return current as Element;
+    if (current.nodeType === 1) {
+      const element = current as Element;
+      if (isValueNode(element)) {
+        return element;
+      }
     }
     search = search + 1;
     current = current.parentNode;

@@ -25,8 +25,8 @@ function isC2dNumberNode(node) {
 function isReject(node) {
   return (
     node.parentElement &&
-    (isAnchorNode(node.parentNode) ||
-      isValueNode(node.parentNode) ||
+    (isAnchorNode(node.parentElement) ||
+      isValueNode(node.parentElement) ||
       isC2dNumberNode(node.parentElement))
   );
 }
