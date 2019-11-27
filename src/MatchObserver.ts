@@ -288,18 +288,12 @@ class MatchObserver {
   }
 
   private _observeValueNode(node: Element) {
+    this.stripMatches(node);
     const matched = this._proceedMatch(node);
-    const matches = this._matchesSet.get(node);
-    const hasMatched = matched && matched.length > 0;
-    const hasMatches = matches && matches.length > 0;
-    if (hasMatched !== hasMatches) {
-      if (hasMatched) {
-        matched.forEach(match => {
-          this.addMatch(match);
-        });
-      } else {
-        this.stripMatches(node);
-      }
+    if (matched) {
+      matched.forEach(match => {
+        this.addMatch(match);
+      });
     }
   }
 
