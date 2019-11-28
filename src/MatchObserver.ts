@@ -3,17 +3,39 @@ import MatchObject from './MatchObject';
 import DataSet from './DataSet';
 import {
   getRcId,
-  throttled,
   queryValueNodes,
   upFirstValueNode,
+  throttled,
+  Throttler,
   RcIdAttrName,
   LinkedRcIdPropName
 } from './utilities';
+
+class EventDelayThrottler implements Throttler {
+  private _delay: number;
+  private _timeSet = new DataSet<number>();
+  constructor(delay: number) {
+    this._delay = delay;
+  }
+  valid(ev: Event) {
+    if (ev.target === ev.currentTarget) {
+      const element = ev.target as Element;
+      const last = this._timeSet.get(element, 0);
+      const now = Date.now();
+      if (now - last > this._delay) {
+        this._timeSet.set(element, now);
+        return true;
+      }
+    }
+    return false;
+  }
+}
 
 class MatchObserver {
   private _currentRoot: Node;
   private _mutationObserver: MutationObserver;
   private _matchesSet: DataSet<MatchObject[]>;
+  private _throttler: Throttler;
   private _mouseenterHandler: EventListener;
   private _mouseleaveHandler: EventListener;
   private _mousemoveHandler: EventListener;
@@ -25,6 +47,7 @@ class MatchObserver {
       throw new Error('Prop [matcher] is required');
     }
     this._matchesSet = new DataSet<MatchObject[]>();
+    this._throttler = new EventDelayThrottler(100);
     // event handlers
     // ev.target is what triggers the event dispatcher to trigger
     // ev.currentTarget is what you assigned your listener to
@@ -38,7 +61,7 @@ class MatchObserver {
         this._hideHovered(ev.target as Element);
       }
     };
-    this._mousemoveHandler = throttled(100, (ev: MouseEvent) => {
+    this._mousemoveHandler = throttled(this._throttler, (ev: MouseEvent) => {
       if (ev.target === ev.currentTarget) {
         this._matchRect(ev.target as Element, ev);
       }

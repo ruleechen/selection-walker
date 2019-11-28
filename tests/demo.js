@@ -142,7 +142,7 @@ window.addEventListener('load', function() {
     }
   });
   observer.observe(document.body);
-  window.mobserver = observer;
+  window._mObserver = observer;
 });
 
 /*
