@@ -1,7 +1,7 @@
-import { MatchProps } from './interfaces';
+import { MatchProps, IMatchObject } from './interfaces';
 import { getEventElement, getRcId, LinkedRcIdPropName } from './utilities';
 
-class MatchObject implements MatchProps {
+class MatchObject implements IMatchObject {
   private _rect: ClientRect;
   private _target: Element;
 

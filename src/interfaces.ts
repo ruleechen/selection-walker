@@ -6,9 +6,14 @@ export interface MatchProps {
   context: any;
 }
 
+export interface IMatchObject extends MatchProps {
+  readonly rect: ClientRect;
+  readonly context: any;
+}
+
 export interface ObserverProps {
   matcher: (node: Node, children: boolean) => MatchProps[];
-  onHoverIn?: (target: Element, match: MatchProps) => void;
+  onHoverIn?: (target: Element, match: IMatchObject) => void;
   onHoverOut?: (target: Element) => void;
   attributeFilter?: string[];
 }
