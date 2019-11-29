@@ -13,10 +13,13 @@ import {
 
 class EventDelayThrottler implements Throttler {
   private _delay: number;
-  private _timeSet = new DataSet<number>();
+  private _timeSet: DataSet<number>;
+
   constructor(delay: number) {
     this._delay = delay;
+    this._timeSet = new DataSet<number>();
   }
+
   valid(ev: Event) {
     if (ev.target === ev.currentTarget) {
       const element = ev.target as Element;
@@ -29,13 +32,17 @@ class EventDelayThrottler implements Throttler {
     }
     return false;
   }
+
+  remove(key: string | Element): boolean {
+    return this._timeSet.remove(key);
+  }
 }
 
 class MatchObserver {
   private _currentRoot: Node;
   private _mutationObserver: MutationObserver;
   private _matchesSet: DataSet<MatchObject[]>;
-  private _throttler: Throttler;
+  private _throttler: EventDelayThrottler;
   private _mouseenterHandler: EventListener;
   private _mouseleaveHandler: EventListener;
   private _mousemoveHandler: EventListener;
@@ -133,6 +140,7 @@ class MatchObserver {
       } else {
         this._removeNodeEvents(target);
         this._matchesSet.remove(target);
+        this._throttler.remove(target);
         target.removeAttribute(RcIdAttrName);
       }
     }
