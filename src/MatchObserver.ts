@@ -8,7 +8,7 @@ import {
   throttled,
   Throttler,
   RcIdAttrName,
-  LinkedRcIdPropName
+  LinkedRcIdPropName,
 } from './utilities';
 
 class EventDelayThrottler implements Throttler {
@@ -96,7 +96,7 @@ class MatchObserver {
     }
     const matched = this._proceedMatch(node, children);
     if (matched) {
-      matched.forEach(match => {
+      matched.forEach((match) => {
         this.addMatch(match);
       });
     }
@@ -118,7 +118,7 @@ class MatchObserver {
     const target = match.getEventTarget();
     // cache matches
     const matches = this._matchesSet.get(target, []);
-    matches.push(match); //TODO: duplicate risk
+    matches.push(match); // TODO: duplicate risk
     this._matchesSet.set(target, matches);
     // attach events
     this._removeNodeEvents(target);
@@ -134,7 +134,7 @@ class MatchObserver {
     const target = match.getEventTarget();
     let matches = this._matchesSet.get(target);
     if (matches) {
-      matches = matches.filter(x => x !== match);
+      matches = matches.filter((x) => x !== match);
       if (matches.length) {
         this._matchesSet.set(target, matches);
       } else {
@@ -173,13 +173,11 @@ class MatchObserver {
         if (target) {
           const matches = this._matchesSet.get(target);
           if (matches) {
-            matches
-              .filter(match => {
-                return match.contains(current);
-              })
-              .forEach(match => {
+            for (const match of matches) {
+              if (match.contains(current)) {
                 this.removeMatch(match);
-              });
+              }
+            }
           }
         }
       }
@@ -206,7 +204,7 @@ class MatchObserver {
   private _bindValueNodes(node: Node) {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
-      valueNodes.forEach(node => {
+      valueNodes.forEach((node) => {
         node.addEventListener('change', this._changeHandler);
       });
     }
@@ -215,7 +213,7 @@ class MatchObserver {
   private _unbindValueNodes(node: Node) {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
-      valueNodes.forEach(node => {
+      valueNodes.forEach((node) => {
         node.removeEventListener('change', this._changeHandler);
       });
     }
@@ -224,7 +222,7 @@ class MatchObserver {
   private _buildRect(target: Element) {
     const matches = this._matchesSet.get(target);
     if (matches) {
-      matches.forEach(match => {
+      matches.forEach((match) => {
         match.buildRect();
       });
     }
@@ -233,7 +231,7 @@ class MatchObserver {
   private _matchRect(target: Element, ev: MouseEvent) {
     const matches = this._matchesSet.get(target);
     if (matches) {
-      const hovered = matches.find(m => {
+      const hovered = matches.find((m) => {
         return m.isMatch(ev.x, ev.y);
       });
       if (hovered) {
@@ -263,47 +261,50 @@ class MatchObserver {
   }
 
   private _observeMutation(node: Node) {
-    this._mutationObserver = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
+    this._mutationObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
         switch (mutation.type) {
-          case 'characterData':
+          case 'characterData': {
             // here the 'target' is always a text node
-            const valueNode1 = upFirstValueNode(mutation.target.parentNode);
-            if (valueNode1) {
-              this._observeValueNode(valueNode1);
+            const valueNode = upFirstValueNode(mutation.target.parentNode);
+            if (valueNode) {
+              this._observeValueNode(valueNode);
             } else {
               this.stripMatches(mutation.target);
               this._searchMatches(mutation.target);
             }
             break;
+          }
 
-          case 'attributes':
+          case 'attributes': {
             // re-build the 'target' node's matches. its children is not need
-            const valueNode2 = upFirstValueNode(mutation.target.parentNode);
-            if (valueNode2) {
-              this._observeValueNode(valueNode2);
+            const valueNode = upFirstValueNode(mutation.target.parentNode);
+            if (valueNode) {
+              this._observeValueNode(valueNode);
             } else {
               this.stripMatches(mutation.target, false);
               this._searchMatches(mutation.target, false);
             }
             break;
+          }
 
-          case 'childList':
+          case 'childList': {
             // here the 'target' is the parent of node being removed/added
-            const valueNode3 = upFirstValueNode(mutation.target);
-            if (valueNode3) {
-              this._observeValueNode(valueNode3);
+            const valueNode = upFirstValueNode(mutation.target);
+            if (valueNode) {
+              this._observeValueNode(valueNode);
             } else {
-              mutation.removedNodes.forEach(node => {
+              mutation.removedNodes.forEach((node) => {
                 this._unbindValueNodes(node);
                 this.stripMatches(node);
               });
-              mutation.addedNodes.forEach(node => {
+              mutation.addedNodes.forEach((node) => {
                 this._bindValueNodes(node);
                 this._searchMatches(node);
               });
             }
             break;
+          }
 
           default:
             break;
@@ -315,7 +316,7 @@ class MatchObserver {
       attributes: !!this._props.attributeFilter,
       characterData: true,
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
@@ -323,7 +324,7 @@ class MatchObserver {
     this.stripMatches(node);
     const matched = this._proceedMatch(node);
     if (matched) {
-      matched.forEach(match => {
+      matched.forEach((match) => {
         this.addMatch(match);
       });
     }

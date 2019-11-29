@@ -2,10 +2,11 @@ export const RcIdAttrName = 'rcid';
 export const LinkedRcIdPropName = `l${RcIdAttrName}`;
 export const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
 
-export const nextId = (function() {
+export const nextId = (function run() {
   let incrementingId = 0;
-  return function(): string {
-    return (incrementingId++).toString();
+  return function nextId(): string {
+    incrementingId += 1;
+    return incrementingId.toString();
   };
 })();
 
@@ -77,7 +78,7 @@ export function upFirstValueNode(node: Node, levels: number = 3): Element {
         return element;
       }
     }
-    search = search + 1;
+    search += 1;
     current = current.parentNode;
   }
   return null;
@@ -94,9 +95,11 @@ export interface Throttler {
 export class DelayThrottler implements Throttler {
   private _last: number = 0;
   private _delay: number;
+
   constructor(delay: number) {
     this._delay = delay;
   }
+
   valid(): boolean {
     const now = Date.now();
     if (now - this._last > this._delay) {
@@ -109,7 +112,7 @@ export class DelayThrottler implements Throttler {
 
 export function throttled(
   throttler: Throttler,
-  func: throttleFunc
+  func: throttleFunc,
 ): throttleFunc {
   if (!throttler) {
     throw new Error('[throttler] is required');
@@ -117,7 +120,7 @@ export function throttled(
   if (!func) {
     throw new Error('[func] is required');
   }
-  return function(...args) {
+  return function delegateFunc(...args) {
     if (throttler.valid(...args)) {
       return func(...args);
     }
