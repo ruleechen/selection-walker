@@ -15,5 +15,5 @@ export interface ObserverProps {
   matcher: (node: Node, children: boolean) => MatchProps[];
   onHoverIn?: (target: Element, match: IMatchObject) => void;
   onHoverOut?: (target: Element) => void;
-  attributeFilter?: string[];
+  observerOptions?: MutationObserverInit;
 }

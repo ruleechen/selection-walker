@@ -119,7 +119,6 @@ window.addEventListener('load', function() {
   });
 
   const observer = new smatch.MatchObserver({
-    attributeFilter: ['href'],
     matcher: (node, children) => {
       return myMatcher(node, children).map(x => {
         return {

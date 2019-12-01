@@ -11,6 +11,14 @@ import {
   LinkedRcIdPropName,
 } from './utilities';
 
+export const DEFAULT_OBSERVER_OPTIONS: MutationObserverInit = {
+  attributeFilter: ['href'],
+  attributes: true,
+  subtree: true,
+  childList: true,
+  characterData: true,
+};
+
 class EventDelayThrottler implements Throttler {
   private _delay: number;
   private _timeSet: DataSet<number>;
@@ -311,13 +319,8 @@ class MatchObserver {
         }
       });
     });
-    this._mutationObserver.observe(node, {
-      attributeFilter: this._props.attributeFilter,
-      attributes: !!this._props.attributeFilter,
-      characterData: true,
-      childList: true,
-      subtree: true,
-    });
+    const options = this._props.observerOptions || DEFAULT_OBSERVER_OPTIONS;
+    this._mutationObserver.observe(node, options);
   }
 
   private _observeValueNode(node: Element) {
