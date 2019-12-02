@@ -1,26 +1,4 @@
-export const RcIdAttrName = 'rcid';
-export const LinkedRcIdPropName = `l${RcIdAttrName}`;
 export const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
-
-export const nextId = (function run() {
-  let incrementingId = 0;
-  return function nextId(): string {
-    incrementingId += 1;
-    return incrementingId.toString();
-  };
-})();
-
-export function getRcId(node: Element, createNew: boolean): string {
-  if (!node) {
-    throw new Error('[node] is required');
-  }
-  let rcId = node.getAttribute(RcIdAttrName);
-  if (!rcId && createNew === true) {
-    rcId = `r${nextId()}`;
-    node.setAttribute(RcIdAttrName, rcId);
-  }
-  return rcId;
-}
 
 export function getEventElement(node: Node): Element {
   if (!node) {

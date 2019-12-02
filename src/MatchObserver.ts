@@ -1,14 +1,10 @@
 import { MatchProps, ObserverProps } from './interfaces';
 import MatchObject from './MatchObject';
-import DataSet from './DataSet';
 import {
-  getRcId,
   queryValueNodes,
   upFirstValueNode,
   throttled,
   Throttler,
-  RcIdAttrName,
-  LinkedRcIdPropName,
 } from './utilities';
 
 export const DEFAULT_OBSERVER_OPTIONS: MutationObserverInit = {
@@ -21,17 +17,17 @@ export const DEFAULT_OBSERVER_OPTIONS: MutationObserverInit = {
 
 class EventDelayThrottler implements Throttler {
   private _delay: number;
-  private _timeSet: DataSet<number>;
+  private _timeSet: Map<Element, number>;
 
   constructor(delay: number) {
     this._delay = delay;
-    this._timeSet = new DataSet<number>();
+    this._timeSet = new Map<Element, number>();
   }
 
   valid(ev: Event) {
     if (ev.target === ev.currentTarget) {
       const element = ev.target as Element;
-      const last = this._timeSet.get(element, 0);
+      const last = this._timeSet.get(element) || 0;
       const now = Date.now();
       if (now - last > this._delay) {
         this._timeSet.set(element, now);
@@ -41,15 +37,16 @@ class EventDelayThrottler implements Throttler {
     return false;
   }
 
-  remove(key: string | Element): boolean {
-    return this._timeSet.remove(key);
+  remove(key: Element): boolean {
+    return this._timeSet.delete(key);
   }
 }
 
 class MatchObserver {
   private _currentRoot: Node;
   private _mutationObserver: MutationObserver;
-  private _matchesSet: DataSet<MatchObject[]>;
+  private _linkedMap: Map<Node, Element>;
+  private _matchesMap: Map<Element, MatchObject[]>;
   private _throttler: EventDelayThrottler;
   private _mouseenterHandler: EventListener;
   private _mouseleaveHandler: EventListener;
@@ -61,7 +58,8 @@ class MatchObserver {
     if (!this._props.matcher) {
       throw new Error('Prop [matcher] is required');
     }
-    this._matchesSet = new DataSet<MatchObject[]>();
+    this._linkedMap = new Map<Node, Element>();
+    this._matchesMap = new Map<Element, MatchObject[]>();
     this._throttler = new EventDelayThrottler(100);
     // event handlers
     // ev.target is what triggers the event dispatcher to trigger
@@ -104,9 +102,9 @@ class MatchObserver {
     }
     const matched = this._proceedMatch(node, children);
     if (matched) {
-      matched.forEach((match) => {
+      for (const match of matched) {
         this.addMatch(match);
-      });
+      }
     }
   }
 
@@ -124,10 +122,13 @@ class MatchObserver {
         ? matchProps
         : new MatchObject(matchProps);
     const target = match.getEventTarget();
+    // setup link
+    this._linkedMap.set(match.startsNode, target);
+    this._linkedMap.set(match.endsNode, target);
     // cache matches
-    const matches = this._matchesSet.get(target, []);
+    const matches = this._matchesMap.get(target) || [];
     matches.push(match); // TODO: duplicate risk
-    this._matchesSet.set(target, matches);
+    this._matchesMap.set(target, matches);
     // attach events
     this._removeNodeEvents(target);
     this._addNodeEvents(target);
@@ -140,16 +141,24 @@ class MatchObserver {
       throw new Error('[match] is required');
     }
     const target = match.getEventTarget();
-    let matches = this._matchesSet.get(target);
+    let matches = this._matchesMap.get(target);
     if (matches) {
+      // exclude
       matches = matches.filter((x) => x !== match);
+      // unlink
+      if (!matches.some((x) => x.contains(match.startsNode))) {
+        this._linkedMap.delete(match.startsNode);
+      }
+      if (!matches.some((x) => x.contains(match.endsNode))) {
+        this._linkedMap.delete(match.endsNode);
+      }
+      // update
       if (matches.length) {
-        this._matchesSet.set(target, matches);
+        this._matchesMap.set(target, matches);
       } else {
         this._removeNodeEvents(target);
-        this._matchesSet.remove(target);
+        this._matchesMap.delete(target);
         this._throttler.remove(target);
-        target.removeAttribute(RcIdAttrName);
       }
     }
   }
@@ -158,33 +167,28 @@ class MatchObserver {
     if (!node) {
       throw new Error('[node] is required');
     }
+    // when strip the root node it means to strip all the matched
+    // so just strip all the matched instead of walking through the DOM
+    if (node === this._currentRoot) {
+      const allMatches = Array.from(this._matchesMap.values());
+      for (const matches of allMatches) {
+        for (const match of matches) {
+          this.removeMatch(match);
+        }
+      }
+      return;
+    }
+    // strip the specified node
     const treeWalker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
     let current = treeWalker.currentNode;
     while (current) {
-      const linkedRcId = current[LinkedRcIdPropName];
-      if (linkedRcId) {
-        // unlink
-        delete current[LinkedRcIdPropName];
-        // find target
-        let target: Element;
-        const selector = `[${RcIdAttrName}="${linkedRcId}"]`;
-        if (node instanceof Element) {
-          target = node.querySelector(selector);
-          if (!target && getRcId(node, false) === linkedRcId) {
-            target = node;
-          }
-        }
-        if (!target) {
-          target = document.querySelector(selector);
-        }
-        // remove matchs
-        if (target) {
-          const matches = this._matchesSet.get(target);
-          if (matches) {
-            for (const match of matches) {
-              if (match.contains(current)) {
-                this.removeMatch(match);
-              }
+      const linkedElement = this._linkedMap.get(current);
+      if (linkedElement) {
+        const matches = this._matchesMap.get(linkedElement);
+        if (matches) {
+          for (const match of matches) {
+            if (match.contains(current)) {
+              this.removeMatch(match);
             }
           }
         }
@@ -212,32 +216,32 @@ class MatchObserver {
   private _bindValueNodes(node: Node) {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
-      valueNodes.forEach((node) => {
+      for (const node of valueNodes) {
         node.addEventListener('change', this._changeHandler);
-      });
+      }
     }
   }
 
   private _unbindValueNodes(node: Node) {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
-      valueNodes.forEach((node) => {
+      for (const node of valueNodes) {
         node.removeEventListener('change', this._changeHandler);
-      });
+      }
     }
   }
 
   private _buildRect(target: Element) {
-    const matches = this._matchesSet.get(target);
+    const matches = this._matchesMap.get(target);
     if (matches) {
-      matches.forEach((match) => {
+      for (const match of matches) {
         match.buildRect();
-      });
+      }
     }
   }
 
   private _matchRect(target: Element, ev: MouseEvent) {
-    const matches = this._matchesSet.get(target);
+    const matches = this._matchesMap.get(target);
     if (matches) {
       const hovered = matches.find((m) => {
         return m.isMatch(ev.x, ev.y);
@@ -270,7 +274,7 @@ class MatchObserver {
 
   private _observeMutation(node: Node) {
     this._mutationObserver = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+      for (const mutation of mutations) {
         switch (mutation.type) {
           case 'characterData': {
             // here the 'target' is always a text node
@@ -317,7 +321,7 @@ class MatchObserver {
           default:
             break;
         }
-      });
+      }
     });
     const options = this._props.observerOptions || DEFAULT_OBSERVER_OPTIONS;
     this._mutationObserver.observe(node, options);
@@ -327,9 +331,9 @@ class MatchObserver {
     this.stripMatches(node);
     const matched = this._proceedMatch(node);
     if (matched) {
-      matched.forEach((match) => {
+      for (const match of matched) {
         this.addMatch(match);
-      });
+      }
     }
   }
 
@@ -337,7 +341,9 @@ class MatchObserver {
     this._mutationObserver.disconnect();
     this.stripMatches(this._currentRoot);
     this._unbindValueNodes(this._currentRoot);
-    this._matchesSet.clear();
+    this._linkedMap.clear();
+    this._matchesMap.clear();
+    this._lastHovered = null;
     this._currentRoot = null;
   }
 }
