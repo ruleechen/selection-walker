@@ -1,7 +1,5 @@
 function phoneDetector(value) {
-  const numbers = libphonenumber.findNumbers(value, {
-    v2: true
-  });
+  const numbers = libphonenumber.findNumbers(value, 'US');
   return numbers;
 }
 
@@ -38,12 +36,14 @@ function processNode(node, detector) {
     if (isValueNode(element)) {
       const valueElement = element;
       const items = detector(valueElement.value);
-      items.forEach(item => {
+      items.forEach((item) => {
         matches.push({
           node: valueElement,
           startsAt: item.startsAt,
           endsAt: item.endsAt,
-          context: item.number
+          context: {
+            number: item.phone,
+          },
         });
       });
     } else if (isAnchorNode(element)) {
@@ -54,7 +54,9 @@ function processNode(node, detector) {
           node: anchorElement,
           startsAt: 0,
           endsAt: anchorElement.innerText.length,
-          context: items[0].number
+          context: {
+            number: items[0].phone,
+          },
         });
       }
     } else if (isC2dNumberNode(element)) {
@@ -64,21 +66,33 @@ function processNode(node, detector) {
         startsAt: 0,
         endsAt: innerText.length,
         context: {
-          number: innerText
-        }
+          number: innerText,
+        },
       });
     }
   } else if (node.nodeType === 3) {
     const textNode = node;
-    const items = detector(textNode.data);
-    items.forEach(item => {
-      matches.push({
-        node: textNode,
-        startsAt: item.startsAt,
-        endsAt: item.endsAt,
-        context: item.number
-      });
-    });
+    let offset = 0;
+    let text = textNode.data.substr(offset);
+    while (text.length) {
+      const items = detector(text);
+      if (!items || !items.length) {
+        break;
+      }
+      for (const item of items) {
+        matches.push({
+          node: textNode,
+          startsAt: offset + item.startsAt,
+          endsAt: offset + item.endsAt,
+          context: {
+            number: item.phone,
+          },
+        });
+      }
+      const lastItem = items[items.length - 1];
+      offset += lastItem.endsAt;
+      text = textNode.data.substr(offset);
+    }
   }
   return matches;
 }
@@ -89,7 +103,7 @@ function myMatcher(root, children) {
       return isReject(node)
         ? NodeFilter.FILTER_REJECT
         : NodeFilter.FILTER_ACCEPT;
-    }
+    },
   });
   let founds = [];
   let current = treeWalker.currentNode;
@@ -115,18 +129,18 @@ window.addEventListener('load', function() {
     '<div style="border:1px solid #ccc; background:#eee; cursor:pointer;">I am menu</div>';
 
   const widget = new UIWidget({
-    root: widgetRoot
+    root: widgetRoot,
   });
 
   const observer = new smatch.MatchObserver({
     matcher: (node, children) => {
-      return myMatcher(node, children).map(x => {
+      return myMatcher(node, children).map((x) => {
         return {
           startsNode: x.node,
           startsAt: x.startsAt,
           endsNode: x.node,
           endsAt: x.endsAt,
-          context: x.context
+          context: x.context,
         };
       });
     },
@@ -138,7 +152,7 @@ window.addEventListener('load', function() {
     },
     onHoverOut(target) {
       widget.hide();
-    }
+    },
   });
   observer.observe(document.body);
   window._mObserver = observer;
