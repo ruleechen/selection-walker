@@ -1,7 +1,7 @@
 import { MatchProps, IMatchObject } from './interfaces';
 import { getEventElement } from './utilities';
 
-class MatchObject implements IMatchObject {
+export class MatchObject implements IMatchObject {
   private _rect: ClientRect;
   private _target: Element;
 
@@ -90,5 +90,3 @@ class MatchObject implements IMatchObject {
     return this._props.context;
   }
 }
-
-export default MatchObject;

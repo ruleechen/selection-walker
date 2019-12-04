@@ -1,5 +1,5 @@
 import { MatchProps, ObserverProps } from './interfaces';
-import MatchObject from './MatchObject';
+import { MatchObject } from './MatchObject';
 import {
   queryValueNodes,
   upFirstValueNode,
@@ -42,7 +42,7 @@ class EventDelayThrottler implements Throttler {
   }
 }
 
-class MatchObserver {
+export class MatchObserver {
   private _currentRoot: Node;
   private _mutationObserver: MutationObserver;
   private _linkedMap: Map<Node, Element>;
@@ -121,7 +121,11 @@ class MatchObserver {
       matchProps instanceof MatchObject
         ? matchProps
         : new MatchObject(matchProps);
+    // get target
     const target = match.getEventTarget();
+    if (!target) {
+      return null;
+    }
     // setup link
     this._linkedMap.set(match.startsNode, target);
     this._linkedMap.set(match.endsNode, target);
@@ -140,7 +144,12 @@ class MatchObserver {
     if (!match) {
       throw new Error('[match] is required');
     }
+    // get target
     const target = match.getEventTarget();
+    if (!target) {
+      return;
+    }
+    // get matches
     let matches = this._matchesMap.get(target);
     if (matches) {
       // exclude
@@ -347,5 +356,3 @@ class MatchObserver {
     this._currentRoot = null;
   }
 }
-
-export default MatchObserver;
