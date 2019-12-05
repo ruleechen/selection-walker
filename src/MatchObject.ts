@@ -1,8 +1,8 @@
-import { MatchProps, IMatchObject } from './interfaces';
+import { MatchProps, MatchRect, IMatchObject } from './interfaces';
 import { getEventElement } from './utilities';
 
 export class MatchObject implements IMatchObject {
-  private _rect: ClientRect;
+  private _rect: MatchRect;
   private _target: Element;
 
   constructor(private _props: MatchProps) {
@@ -48,8 +48,30 @@ export class MatchObject implements IMatchObject {
 
   buildRect() {
     const range = this.createRange();
-    this._rect = range.getBoundingClientRect();
-    range.detach(); // Releases the Range from use to improve performance.
+    const rangeCopy = range.cloneRange();
+
+    const rect = range.getBoundingClientRect();
+
+    range.collapse(true);
+    const startRect = range.getBoundingClientRect();
+
+    rangeCopy.collapse(false);
+    const endRect = range.getBoundingClientRect();
+
+    // Releases the Range from use to improve performance.
+    range.detach();
+    rangeCopy.detach();
+
+    this._rect = {
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      startLineHeight: startRect.height,
+      endLineHeight: endRect.height,
+    };
   }
 
   isMatch(x: number, y: number): boolean {
@@ -82,7 +104,7 @@ export class MatchObject implements IMatchObject {
     return this._props.endsAt;
   }
 
-  get rect(): ClientRect {
+  get rect(): MatchRect {
     return this._rect;
   }
 

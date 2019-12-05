@@ -6,8 +6,13 @@ export interface MatchProps {
   context: any;
 }
 
+export interface MatchRect extends ClientRect {
+  startLineHeight: number;
+  endLineHeight: number;
+}
+
 export interface IMatchObject extends MatchProps {
-  readonly rect: ClientRect;
+  readonly rect: MatchRect;
   readonly context: any;
 }
 
