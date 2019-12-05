@@ -3,6 +3,7 @@ function phoneDetector(value) {
   return numbers;
 }
 
+const includeValueTypes = false;
 const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
 function isValueNode(node) {
   return valueNodeTypes.indexOf(node.tagName) !== -1;
@@ -34,18 +35,20 @@ function processNode(node, detector) {
   if (node.nodeType === 1) {
     const element = node;
     if (isValueNode(element)) {
-      const valueElement = element;
-      const items = detector(valueElement.value);
-      items.forEach((item) => {
-        matches.push({
-          node: valueElement,
-          startsAt: item.startsAt,
-          endsAt: item.endsAt,
-          context: {
-            number: item.phone,
-          },
+      if (includeValueTypes) {
+        const valueElement = element;
+        const items = detector(valueElement.value);
+        items.forEach((item) => {
+          matches.push({
+            node: valueElement,
+            startsAt: item.startsAt,
+            endsAt: item.endsAt,
+            context: {
+              number: item.phone,
+            },
+          });
         });
-      });
+      }
     } else if (isAnchorNode(element)) {
       const anchorElement = element;
       const items = detector(anchorElement.href);
