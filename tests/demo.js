@@ -1,9 +1,11 @@
 function phoneDetector(value) {
-  const numbers = libphonenumber.findNumbers(value, 'US');
+  const numbers = libphonenumber.findNumbers(value, 'GB', {
+    v2: true,
+  });
   return numbers;
 }
 
-const includeValueTypes = false;
+const includeValueTypes = true;
 const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
 function isValueNode(node) {
   return valueNodeTypes.indexOf(node.tagName) !== -1;
@@ -38,16 +40,16 @@ function processNode(node, detector) {
       if (includeValueTypes) {
         const valueElement = element;
         const items = detector(valueElement.value);
-        items.forEach((item) => {
+        for (const item of items) {
           matches.push({
             node: valueElement,
             startsAt: item.startsAt,
             endsAt: item.endsAt,
             context: {
-              number: item.phone,
+              number: item.number.number,
             },
           });
-        });
+        }
       }
     } else if (isAnchorNode(element)) {
       const anchorElement = element;
@@ -58,7 +60,7 @@ function processNode(node, detector) {
           startsAt: 0,
           endsAt: anchorElement.innerText.length,
           context: {
-            number: items[0].phone,
+            number: items[0].number.number,
           },
         });
       }
@@ -88,7 +90,7 @@ function processNode(node, detector) {
           startsAt: offset + item.startsAt,
           endsAt: offset + item.endsAt,
           context: {
-            number: item.phone,
+            number: item.number.number,
           },
         });
       }
