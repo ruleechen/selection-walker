@@ -18,8 +18,14 @@
 </head>
 <body>
   +12345678901
-  <p>Click to SMS: <a href="sms:+12345678901">SMS number</a></p>
-  <p>Click to Call: <a href="tel:+12345678902">Call number</a></p>
+  <p>Anchor tel: <a href="tel:+12345678902">Call number</a></p>
+  <p>
+    Anchor sms:
+    <a href="sms:+12345678901" style="display: block; margin-right: 100px; border: 50px;">
+      SMS number
+      <span style="display: block; margin-left: 50px;">spliter with margins</span>
+    </a>
+  </p>
   <p>Meeting link should be skipped<br/>https://meetings.ringcentral.com/j/1482652822 +12345678903 abc</p>
   <p>abc +12345678904 abc +12345678905 abc</p>
   <p>+12345678906</p>

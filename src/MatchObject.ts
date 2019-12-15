@@ -1,6 +1,23 @@
 import { MatchProps, MatchRect, IMatchObject } from './interfaces';
 import { getEventElement } from './utilities';
 
+function searchChildNode(node: Node, getFirst: boolean) {
+  let current: Node = node;
+  while (current.childNodes.length) {
+    current = getFirst ? current.firstChild : current.lastChild;
+    // skip whitespace or empty text node, it has nothing to select
+    while (current.nodeType === 3 && !current.textContent.trim()) {
+      const sibling = getFirst ? current.nextSibling : current.previousSibling;
+      if (sibling) {
+        current = sibling;
+      } else {
+        break;
+      }
+    }
+  }
+  return current;
+}
+
 export class MatchObject implements IMatchObject {
   private _rect: MatchRect;
   private _target: Element;
@@ -16,13 +33,19 @@ export class MatchObject implements IMatchObject {
 
   createRange(): Range {
     const range = document.createRange();
-    if (this.startsNode instanceof Element) {
-      range.setStartBefore(this.startsNode);
+    if (
+      this.startsNode instanceof Element ||
+      Number.isInteger(this.startsAt) === false
+    ) {
+      range.setStartBefore(searchChildNode(this.startsNode, true));
     } else {
       range.setStart(this.startsNode, this.startsAt);
     }
-    if (this.endsNode instanceof Element) {
-      range.setEndAfter(this.endsNode);
+    if (
+      this.endsNode instanceof Element ||
+      Number.isInteger(this.endsAt) === false
+    ) {
+      range.setEndAfter(searchChildNode(this.endsNode, false));
     } else {
       range.setEnd(this.endsNode, this.endsAt);
     }

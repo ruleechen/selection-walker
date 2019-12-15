@@ -25,19 +25,17 @@ class EventDelayThrottler implements Throttler {
   }
 
   valid(ev: Event) {
-    if (ev.target === ev.currentTarget) {
-      const element = ev.target as Element;
-      const last = this._timeSet.get(element) || 0;
-      const now = Date.now();
-      if (now - last > this._delay) {
-        this._timeSet.set(element, now);
-        return true;
-      }
+    const element = ev.currentTarget as Element;
+    const last = this._timeSet.get(element) || 0;
+    const now = Date.now();
+    if (now - last > this._delay) {
+      this._timeSet.set(element, now);
+      return true;
     }
     return false;
   }
 
-  remove(key: Element): boolean {
+  removeTime(key: Element): boolean {
     return this._timeSet.delete(key);
   }
 }
@@ -47,11 +45,6 @@ export class MatchObserver {
   private _mutationObserver: MutationObserver;
   private _linkedMap: Map<Node, Element>;
   private _matchesMap: Map<Element, MatchObject[]>;
-  private _throttler: EventDelayThrottler;
-  private _mouseenterHandler: EventListener;
-  private _mouseleaveHandler: EventListener;
-  private _mousemoveHandler: EventListener;
-  private _changeHandler: EventListener;
   private _lastHovered: MatchObject;
 
   constructor(private _props: ObserverProps) {
@@ -60,30 +53,6 @@ export class MatchObserver {
     }
     this._linkedMap = new Map<Node, Element>();
     this._matchesMap = new Map<Element, MatchObject[]>();
-    this._throttler = new EventDelayThrottler(100);
-    // event handlers
-    // ev.target is what triggers the event dispatcher to trigger
-    // ev.currentTarget is what you assigned your listener to
-    this._mouseenterHandler = (ev: MouseEvent) => {
-      if (ev.target === ev.currentTarget) {
-        this._buildRect(ev.target as Element);
-      }
-    };
-    this._mouseleaveHandler = (ev: MouseEvent) => {
-      if (ev.target === ev.currentTarget) {
-        this._hideHovered(ev.target as Element);
-      }
-    };
-    this._mousemoveHandler = throttled(this._throttler, (ev: MouseEvent) => {
-      if (ev.target === ev.currentTarget) {
-        this._matchRect(ev.target as Element, ev);
-      }
-    });
-    this._changeHandler = (ev: Event) => {
-      if (ev.target === ev.currentTarget) {
-        this._observeValueNode(ev.target as Element);
-      }
-    };
   }
 
   observe(node: Node) {
@@ -167,7 +136,7 @@ export class MatchObserver {
       } else {
         this._removeNodeEvents(target);
         this._matchesMap.delete(target);
-        this._throttler.remove(target);
+        this._mousemoveThrottler.removeTime(target);
       }
     }
   }
@@ -226,7 +195,7 @@ export class MatchObserver {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
       for (const node of valueNodes) {
-        node.addEventListener('change', this._changeHandler);
+        node.addEventListener('change', this._valueChangeHandler);
       }
     }
   }
@@ -235,10 +204,41 @@ export class MatchObserver {
     if (node instanceof Element) {
       const valueNodes = queryValueNodes(node);
       for (const node of valueNodes) {
-        node.removeEventListener('change', this._changeHandler);
+        node.removeEventListener('change', this._valueChangeHandler);
       }
     }
   }
+
+  // event handlers
+  // ev.target is what triggers the event dispatcher to trigger
+  // ev.currentTarget is what you assigned your listener to
+
+  private _mouseenterHandler: EventListener = (ev: MouseEvent) => {
+    if (ev.target === ev.currentTarget) {
+      this._buildRect(ev.currentTarget as Element);
+    }
+  };
+
+  private _mouseleaveHandler: EventListener = (ev: MouseEvent) => {
+    if (ev.target === ev.currentTarget) {
+      this._hideHovered(ev.currentTarget as Element);
+    }
+  };
+
+  private _mousemoveThrottler = new EventDelayThrottler(100);
+
+  private _mousemoveHandler: EventListener = throttled(
+    this._mousemoveThrottler,
+    (ev: MouseEvent) => {
+      this._matchRect(ev.currentTarget as Element, ev);
+    },
+  );
+
+  private _valueChangeHandler: EventListener = (ev: Event) => {
+    if (ev.target === ev.currentTarget) {
+      this._observeValueNode(ev.currentTarget as Element);
+    }
+  };
 
   private _buildRect(target: Element) {
     const matches = this._matchesMap.get(target);
@@ -298,13 +298,13 @@ export class MatchObserver {
           }
 
           case 'attributes': {
-            // re-build the 'target' node's matches. its children is not need
+            // re-build the 'target' node's matches
             const valueNode = upFirstValueNode(mutation.target.parentNode);
             if (valueNode) {
               this._observeValueNode(valueNode);
             } else {
-              this.stripMatches(mutation.target, false);
-              this._searchMatches(mutation.target, false);
+              this.stripMatches(mutation.target);
+              this._searchMatches(mutation.target);
             }
             break;
           }
