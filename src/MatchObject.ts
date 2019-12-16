@@ -1,12 +1,12 @@
 import { MatchProps, MatchRect, IMatchObject } from './interfaces';
-import { getEventElement } from './utilities';
+import { isTextNode, getEventElement } from './utilities';
 
-function searchChildNode(node: Node, getFirst: boolean) {
+function searchDescendant(node: Node, getFirst: boolean): Node {
   let current: Node = node;
   while (current.childNodes.length) {
     current = getFirst ? current.firstChild : current.lastChild;
     // skip whitespace or empty text node, it has nothing to select
-    while (current.nodeType === 3 && !current.textContent.trim()) {
+    while (isTextNode(current) && !current.textContent.trim()) {
       const sibling = getFirst ? current.nextSibling : current.previousSibling;
       if (sibling) {
         current = sibling;
@@ -16,6 +16,16 @@ function searchChildNode(node: Node, getFirst: boolean) {
     }
   }
   return current;
+}
+
+function searchOffset(node: Node, getFirst: boolean): number {
+  if (!isTextNode(node)) {
+    return null;
+  }
+  const reg = getFirst ? /^\s+/ : /\s+$/;
+  const text = node.textContent.replace(reg, '');
+  const offset = getFirst ? node.textContent.length - text.length : text.length;
+  return offset;
 }
 
 export class MatchObject implements IMatchObject {
@@ -33,22 +43,31 @@ export class MatchObject implements IMatchObject {
 
   createRange(): Range {
     const range = document.createRange();
-    if (
-      this.startsNode instanceof Element ||
-      Number.isInteger(this.startsAt) === false
-    ) {
-      range.setStartBefore(searchChildNode(this.startsNode, true));
-    } else {
+
+    if (isTextNode(this.startsNode) && Number.isInteger(this.startsAt)) {
       range.setStart(this.startsNode, this.startsAt);
-    }
-    if (
-      this.endsNode instanceof Element ||
-      Number.isInteger(this.endsAt) === false
-    ) {
-      range.setEndAfter(searchChildNode(this.endsNode, false));
     } else {
-      range.setEnd(this.endsNode, this.endsAt);
+      const searchedStartsNode = searchDescendant(this.startsNode, true);
+      const searchedStartsAt = searchOffset(searchedStartsNode, true);
+      if (Number.isInteger(searchedStartsAt)) {
+        range.setStart(searchedStartsNode, searchedStartsAt);
+      } else {
+        range.setStartBefore(searchedStartsNode);
+      }
     }
+
+    if (isTextNode(this.endsNode) && Number.isInteger(this.endsAt)) {
+      range.setEnd(this.endsNode, this.endsAt);
+    } else {
+      const searchedEndsNode = searchDescendant(this.endsNode, false);
+      const searchedEndsAt = searchOffset(searchedEndsNode, false);
+      if (Number.isInteger(searchedEndsAt)) {
+        range.setEnd(searchedEndsNode, searchedEndsAt);
+      } else {
+        range.setEndAfter(searchedEndsNode);
+      }
+    }
+
     return range;
   }
 

@@ -1,5 +1,5 @@
 function phoneDetector(value) {
-  const numbers = libphonenumber.findNumbers(value, 'GB', {
+  const numbers = libphonenumber.findNumbers(value, 'US', {
     v2: true,
   });
   return numbers;
@@ -42,7 +42,8 @@ function processNode(node, detector) {
         const items = detector(valueElement.value);
         for (const item of items) {
           matches.push({
-            node: valueElement,
+            startsNode: valueElement,
+            endsNode: valueElement,
             startsAt: item.startsAt,
             endsAt: item.endsAt,
             context: {
@@ -56,9 +57,8 @@ function processNode(node, detector) {
       const items = detector(anchorElement.href);
       if (items.length) {
         matches.push({
-          node: anchorElement,
-          startsAt: 0,
-          endsAt: anchorElement.innerText.length,
+          startsNode: anchorElement,
+          endsNode: anchorElement,
           context: {
             number: items[0].number.number,
           },
@@ -67,9 +67,8 @@ function processNode(node, detector) {
     } else if (isC2dNumberNode(element)) {
       const innerText = element.innerText;
       matches.push({
-        node: element,
-        startsAt: 0,
-        endsAt: innerText.length,
+        startsNode: element,
+        endsNode: element,
         context: {
           number: innerText,
         },
@@ -86,7 +85,8 @@ function processNode(node, detector) {
       }
       for (const item of items) {
         matches.push({
-          node: textNode,
+          startsNode: textNode,
+          endsNode: textNode,
           startsAt: offset + item.startsAt,
           endsAt: offset + item.endsAt,
           context: {
@@ -141,9 +141,9 @@ window.addEventListener('load', function() {
     matcher: (node, children) => {
       return myMatcher(node, children).map((x) => {
         return {
-          startsNode: x.node,
+          startsNode: x.startsNode,
+          endsNode: x.endsNode,
           startsAt: x.startsAt,
-          endsNode: x.node,
           endsAt: x.endsAt,
           context: x.context,
         };

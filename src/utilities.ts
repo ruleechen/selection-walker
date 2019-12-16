@@ -31,7 +31,7 @@ export function isNodeInDom(node: Node): boolean {
 }
 
 export function isValueNode(node: Element): boolean {
-  return valueNodeTypes.indexOf(node.tagName) !== -1;
+  return node && valueNodeTypes.indexOf(node.tagName) !== -1;
 }
 
 export function queryValueNodes(node: Element): Element[] {
@@ -44,6 +44,10 @@ export function queryValueNodes(node: Element): Element[] {
     }
   }
   return nodes;
+}
+
+export function isTextNode(node: Node): boolean {
+  return node && node.nodeType === 3;
 }
 
 export function upFirstValueNode(node: Node, levels: number = 3): Element {
