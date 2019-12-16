@@ -18,7 +18,7 @@ function searchDescendant(node: Node, getFirst: boolean): Node {
   return current;
 }
 
-function searchOffset(node: Node, getFirst: boolean): number {
+function searchTextOffset(node: Node, getFirst: boolean): number {
   if (!isTextNode(node)) {
     return null;
   }
@@ -47,24 +47,24 @@ export class MatchObject implements IMatchObject {
     if (isTextNode(this.startsNode) && Number.isInteger(this.startsAt)) {
       range.setStart(this.startsNode, this.startsAt);
     } else {
-      const searchedStartsNode = searchDescendant(this.startsNode, true);
-      const searchedStartsAt = searchOffset(searchedStartsNode, true);
-      if (Number.isInteger(searchedStartsAt)) {
-        range.setStart(searchedStartsNode, searchedStartsAt);
+      const hitStartsNode = searchDescendant(this.startsNode, true);
+      const hitStartsAt = searchTextOffset(hitStartsNode, true);
+      if (Number.isInteger(hitStartsAt)) {
+        range.setStart(hitStartsNode, hitStartsAt);
       } else {
-        range.setStartBefore(searchedStartsNode);
+        range.setStartBefore(hitStartsNode);
       }
     }
 
     if (isTextNode(this.endsNode) && Number.isInteger(this.endsAt)) {
       range.setEnd(this.endsNode, this.endsAt);
     } else {
-      const searchedEndsNode = searchDescendant(this.endsNode, false);
-      const searchedEndsAt = searchOffset(searchedEndsNode, false);
-      if (Number.isInteger(searchedEndsAt)) {
-        range.setEnd(searchedEndsNode, searchedEndsAt);
+      const hitEndsNode = searchDescendant(this.endsNode, false);
+      const hitEndsAt = searchTextOffset(hitEndsNode, false);
+      if (Number.isInteger(hitEndsAt)) {
+        range.setEnd(hitEndsNode, hitEndsAt);
       } else {
-        range.setEndAfter(searchedEndsNode);
+        range.setEndAfter(hitEndsNode);
       }
     }
 
