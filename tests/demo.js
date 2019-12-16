@@ -153,6 +153,11 @@ window.addEventListener('load', function() {
       if (match.context && match.context.number) {
         widgetRoot.firstChild.innerHTML = match.context.number;
         widget.show(match.rect);
+        // test
+        const range = match.createRange();
+        const selection  = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
       }
     },
     onHoverOut(target) {
