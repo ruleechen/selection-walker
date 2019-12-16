@@ -3,6 +3,8 @@ const MaxZIndex = 2147483647;
 class UIWidget {
   _root;
   _timeoutId;
+  _lastTop;
+  _lastLeft;
 
   constructor({ root }) {
     if (!root) {
@@ -26,9 +28,15 @@ class UIWidget {
 
   show(rect) {
     clearTimeout(this._timeoutId);
-    this._root.style.display = 'block';
-    this._root.style.top = rect.top + window.pageYOffset + 'px';
-    this._root.style.left = rect.right + window.pageXOffset + 5 + 'px';
+    const top = Math.round(rect.top + window.pageYOffset);
+    const left = Math.round(rect.right + window.pageXOffset + 5);
+    if (this._lastTop !== top || this._lastLeft !== left) {
+      this._lastTop = top;
+      this._lastLeft = left;
+      this._root.style.display = 'block';
+      this._root.style.top = top + 'px';
+      this._root.style.left = left + 'px';
+    }
   }
 
   hide(timeout = 512) {
