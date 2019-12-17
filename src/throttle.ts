@@ -44,8 +44,12 @@ export class EventDelayThrottler implements Throttler {
     return false;
   }
 
-  removeTime(key: Element): boolean {
-    return this._timeSet.delete(key);
+  reset(target: Element): boolean {
+    return this._timeSet.delete(target);
+  }
+
+  clear(): void {
+    this._timeSet.clear();
   }
 }
 

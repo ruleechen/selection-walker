@@ -107,7 +107,7 @@ export class MatchObserver {
       } else {
         this._removeNodeEvents(target);
         this._matchesMap.delete(target);
-        this._mousemoveThrottler.removeTime(target);
+        this._mousemoveThrottler.reset(target);
       }
     }
   }
@@ -320,6 +320,7 @@ export class MatchObserver {
     this._mutationObserver.disconnect();
     this.stripMatches(this._currentRoot);
     this._unbindValueNodes(this._currentRoot);
+    this._mousemoveThrottler.clear();
     this._linkedMap.clear();
     this._matchesMap.clear();
     this._lastHovered = null;
