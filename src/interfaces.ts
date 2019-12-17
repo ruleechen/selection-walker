@@ -6,6 +6,10 @@ export interface MatchProps {
   context: any;
 }
 
+export interface TaggableMouseEvent extends MouseEvent {
+  hasBeenHandled: boolean;
+}
+
 export interface MatchRect extends ClientRect {
   startLineHeight: number;
   endLineHeight: number;

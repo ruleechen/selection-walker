@@ -1,11 +1,7 @@
-import { MatchProps, ObserverProps } from './interfaces';
+import { MatchProps, ObserverProps, TaggableMouseEvent } from './interfaces';
+import { queryValueNodes, upFirstValueNode } from './utilities';
+import { throttled, EventDelayThrottler } from './throttle';
 import { MatchObject } from './MatchObject';
-import {
-  queryValueNodes,
-  upFirstValueNode,
-  throttled,
-  Throttler,
-} from './utilities';
 
 export const DEFAULT_OBSERVER_OPTIONS: MutationObserverInit = {
   attributeFilter: ['href'],
@@ -14,31 +10,6 @@ export const DEFAULT_OBSERVER_OPTIONS: MutationObserverInit = {
   childList: true,
   characterData: true,
 };
-
-class EventDelayThrottler implements Throttler {
-  private _delay: number;
-  private _timeSet: Map<Element, number>;
-
-  constructor(delay: number) {
-    this._delay = delay;
-    this._timeSet = new Map<Element, number>();
-  }
-
-  valid(ev: Event) {
-    const element = ev.currentTarget as Element;
-    const last = this._timeSet.get(element) || 0;
-    const now = Date.now();
-    if (now - last > this._delay) {
-      this._timeSet.set(element, now);
-      return true;
-    }
-    return false;
-  }
-
-  removeTime(key: Element): boolean {
-    return this._timeSet.delete(key);
-  }
-}
 
 export class MatchObserver {
   private _currentRoot: Node;
@@ -229,8 +200,11 @@ export class MatchObserver {
 
   private _mousemoveHandler: EventListener = throttled(
     this._mousemoveThrottler,
-    (ev: MouseEvent) => {
-      this._matchRect(ev.currentTarget as Element, ev);
+    (ev: TaggableMouseEvent) => {
+      if (!ev.hasBeenHandled) {
+        ev.hasBeenHandled = true;
+        this._matchRect(ev.currentTarget as Element, ev);
+      }
     },
   );
 
