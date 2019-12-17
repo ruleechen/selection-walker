@@ -62,7 +62,7 @@ export class MatchObserver {
         ? matchProps
         : new MatchObject(matchProps);
     // get target
-    const target = match.getEventTarget();
+    const target = match.getAncestorContainer();
     if (!target) {
       return null;
     }
@@ -85,7 +85,7 @@ export class MatchObserver {
       throw new Error('[match] is required');
     }
     // get target
-    const target = match.getEventTarget();
+    const target = match.getAncestorContainer();
     if (!target) {
       return;
     }

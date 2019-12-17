@@ -20,7 +20,7 @@ export function isValueNode(node: Node): boolean {
   );
 }
 
-export function getClosestElement(node: Node): Element {
+export function upClosestElement(node: Node): Element {
   if (!node) {
     throw new Error('[node] is required');
   }
@@ -32,7 +32,7 @@ export function isNodeInDom(node: Node): boolean {
   if (!node) {
     return false;
   }
-  const element = getClosestElement(node);
+  const element = upClosestElement(node);
   if (element) {
     const rect = element.getBoundingClientRect();
     if (rect.top || rect.left || rect.height || rect.width) {

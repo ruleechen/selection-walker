@@ -1,5 +1,5 @@
 import { MatchProps, MatchRect, IMatchObject } from './interfaces';
-import { isTextNode, isValueNode, getClosestElement } from './utilities';
+import { isTextNode, isValueNode, upClosestElement } from './utilities';
 
 function searchDescendant(node: Node, getFirst: boolean): Node {
   let current: Node = node;
@@ -29,8 +29,8 @@ function searchTextOffset(node: Node, getFirst: boolean): number {
 }
 
 export class MatchObject implements IMatchObject {
+  private _container: Element;
   private _rect: MatchRect;
-  private _target: Element;
 
   constructor(private _props: MatchProps) {
     if (!this._props.startsNode) {
@@ -75,10 +75,10 @@ export class MatchObject implements IMatchObject {
     return range;
   }
 
-  getEventTarget(): Element {
-    // should cache event target reference
-    // we can't get the correct event target when the startsNode or the endsNode is removed
-    if (!this._target) {
+  getAncestorContainer(): Element {
+    // should cache ancestor container reference
+    // we can't get the correct ancestor container when the startsNode or the endsNode is removed
+    if (!this._container) {
       let node: Node;
       if (this.startsNode === this.endsNode) {
         node = this.startsNode;
@@ -87,9 +87,9 @@ export class MatchObject implements IMatchObject {
         node = range.commonAncestorContainer;
         range.detach(); // Releases the Range from use to improve performance.
       }
-      this._target = getClosestElement(node);
+      this._container = upClosestElement(node);
     }
-    return this._target;
+    return this._container;
   }
 
   buildRect() {
