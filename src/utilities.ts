@@ -34,13 +34,15 @@ export function isValueNode(node: Element): boolean {
   return node && valueNodeTypes.indexOf(node.tagName) !== -1;
 }
 
-export function queryValueNodes(node: Element): Element[] {
+export function queryValueNodes(node: Node): Element[] {
   let nodes = [];
-  if (isValueNode(node)) {
-    nodes.push(node);
-  } else {
-    for (const tag of valueNodeTypes) {
-      nodes = nodes.concat(Array.from(node.querySelectorAll(tag)));
+  if (node instanceof Element) {
+    if (isValueNode(node)) {
+      nodes.push(node);
+    } else {
+      for (const tag of valueNodeTypes) {
+        nodes = nodes.concat(Array.from(node.querySelectorAll(tag)));
+      }
     }
   }
   return nodes;

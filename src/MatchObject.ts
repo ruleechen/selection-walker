@@ -1,5 +1,5 @@
 import { MatchProps, MatchRect, IMatchObject } from './interfaces';
-import { isTextNode, getEventElement } from './utilities';
+import { isTextNode, isValueNode, getEventElement } from './utilities';
 
 function searchDescendant(node: Node, getFirst: boolean): Node {
   let current: Node = node;
@@ -46,6 +46,8 @@ export class MatchObject implements IMatchObject {
 
     if (isTextNode(this.startsNode) && Number.isInteger(this.startsAt)) {
       range.setStart(this.startsNode, this.startsAt);
+    } else if (isValueNode(this.startsNode as Element)) {
+      range.setStartBefore(this.startsNode);
     } else {
       const hitStartsNode = searchDescendant(this.startsNode, true);
       const hitStartsAt = searchTextOffset(hitStartsNode, true);
@@ -58,6 +60,8 @@ export class MatchObject implements IMatchObject {
 
     if (isTextNode(this.endsNode) && Number.isInteger(this.endsAt)) {
       range.setEnd(this.endsNode, this.endsAt);
+    } else if (isValueNode(this.endsNode as Element)) {
+      range.setEndAfter(this.endsNode);
     } else {
       const hitEndsNode = searchDescendant(this.endsNode, false);
       const hitEndsAt = searchTextOffset(hitEndsNode, false);

@@ -1,10 +1,14 @@
 const MaxZIndex = 2147483647;
+const DEFAULT_CSS = {
+  display: 'none',
+  position: 'absolute',
+  zIndex: MaxZIndex.toString(),
+};
 
 class UIWidget {
   _root;
   _timeoutId;
-  _lastTop;
-  _lastLeft;
+  _lastCss = {};
 
   constructor({ root }) {
     if (!root) {
@@ -15,9 +19,7 @@ class UIWidget {
   }
 
   _init() {
-    this._root.style.display = 'none';
-    this._root.style.position = 'absolute';
-    this._root.style.zIndex = MaxZIndex.toString();
+    this._updateCss(DEFAULT_CSS);
     this._root.addEventListener('mouseenter', () => {
       clearTimeout(this._timeoutId);
     });
@@ -26,26 +28,37 @@ class UIWidget {
     });
   }
 
+  _updateCss(newCss) {
+    const mergedCss = {
+      ...this._lastCss,
+      ...newCss,
+    };
+    const hasChanged =
+      JSON.stringify(mergedCss) !== JSON.stringify(this._lastCss);
+    if (hasChanged) {
+      this._lastCss = mergedCss;
+      Object.keys(mergedCss).forEach((key) => {
+        this._root.style[key] = this._lastCss[key];
+      });
+    }
+  }
+
   show(rect) {
     clearTimeout(this._timeoutId);
-    const top = Math.round(rect.top + window.pageYOffset);
-    const left = Math.round(rect.right + window.pageXOffset + 5);
-    if (this._lastTop !== top || this._lastLeft !== left) {
-      this._lastTop = top;
-      this._lastLeft = left;
-      this._root.style.display = 'block';
-      this._root.style.top = top + 'px';
-      this._root.style.left = left + 'px';
-    }
+    this._updateCss({
+      display: 'block',
+      top: Math.round(rect.top + window.pageYOffset) + 'px',
+      left: Math.round(rect.right + window.pageXOffset + 5) + 'px',
+    });
   }
 
   hide(timeout = 512) {
     if (timeout) {
       this._timeoutId = setTimeout(() => {
-        this._root.style.display = 'none';
+        this._updateCss({ display: 'none' });
       }, timeout);
     } else {
-      this._root.style.display = 'none';
+      this._updateCss({ display: 'none' });
     }
   }
 

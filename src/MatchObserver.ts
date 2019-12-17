@@ -163,20 +163,16 @@ export class MatchObserver {
   }
 
   private _bindValueNodes(node: Node) {
-    if (node instanceof Element) {
-      const valueNodes = queryValueNodes(node);
-      for (const node of valueNodes) {
-        node.addEventListener('change', this._valueChangeHandler);
-      }
+    const valueNodes = queryValueNodes(node);
+    for (const node of valueNodes) {
+      node.addEventListener('change', this._valueChangeHandler);
     }
   }
 
   private _unbindValueNodes(node: Node) {
-    if (node instanceof Element) {
-      const valueNodes = queryValueNodes(node);
-      for (const node of valueNodes) {
-        node.removeEventListener('change', this._valueChangeHandler);
-      }
+    const valueNodes = queryValueNodes(node);
+    for (const node of valueNodes) {
+      node.removeEventListener('change', this._valueChangeHandler);
     }
   }
 
