@@ -1,11 +1,30 @@
-export const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
+const NodeType = {
+  ELEMENT_NODE: 1,
+  TEXT_NODE: 3,
+};
 
-export function getEventElement(node: Node): Element {
+const valueNodeTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
+
+export function isElementNode(node: Node): boolean {
+  return node && node.nodeType === NodeType.ELEMENT_NODE;
+}
+
+export function isTextNode(node: Node): boolean {
+  return node && node.nodeType === NodeType.TEXT_NODE;
+}
+
+export function isValueNode(node: Node): boolean {
+  return (
+    isElementNode(node) &&
+    valueNodeTypes.indexOf((node as Element).tagName) !== -1
+  );
+}
+
+export function getClosestElement(node: Node): Element {
   if (!node) {
     throw new Error('[node] is required');
   }
-  const element =
-    node instanceof Element ? (node as Element) : node.parentElement;
+  const element = isElementNode(node) ? (node as Element) : node.parentElement;
   return element;
 }
 
@@ -13,7 +32,7 @@ export function isNodeInDom(node: Node): boolean {
   if (!node) {
     return false;
   }
-  const element = getEventElement(node);
+  const element = getClosestElement(node);
   if (element) {
     const rect = element.getBoundingClientRect();
     if (rect.top || rect.left || rect.height || rect.width) {
@@ -30,37 +49,25 @@ export function isNodeInDom(node: Node): boolean {
   return false;
 }
 
-export function isValueNode(node: Element): boolean {
-  return node && valueNodeTypes.indexOf(node.tagName) !== -1;
-}
-
 export function queryValueNodes(node: Node): Element[] {
   let nodes = [];
-  if (node instanceof Element) {
-    if (isValueNode(node)) {
-      nodes.push(node);
-    } else {
-      for (const tag of valueNodeTypes) {
-        nodes = nodes.concat(Array.from(node.querySelectorAll(tag)));
-      }
+  if (isValueNode(node)) {
+    nodes.push(node);
+  } else if (isElementNode(node)) {
+    const element = node as Element;
+    for (const tag of valueNodeTypes) {
+      nodes = nodes.concat(Array.from(element.querySelectorAll(tag)));
     }
   }
   return nodes;
-}
-
-export function isTextNode(node: Node): boolean {
-  return node && node.nodeType === 3;
 }
 
 export function upFirstValueNode(node: Node, levels: number = 3): Element {
   let search = 0;
   let current = node;
   while (current && search < levels) {
-    if (current.nodeType === 1) {
-      const element = current as Element;
-      if (isValueNode(element)) {
-        return element;
-      }
+    if (isValueNode(current)) {
+      return current as Element;
     }
     search += 1;
     current = current.parentNode;

@@ -1,5 +1,5 @@
 import { MatchProps, MatchRect, IMatchObject } from './interfaces';
-import { isTextNode, isValueNode, getEventElement } from './utilities';
+import { isTextNode, isValueNode, getClosestElement } from './utilities';
 
 function searchDescendant(node: Node, getFirst: boolean): Node {
   let current: Node = node;
@@ -46,7 +46,7 @@ export class MatchObject implements IMatchObject {
 
     if (isTextNode(this.startsNode) && Number.isInteger(this.startsAt)) {
       range.setStart(this.startsNode, this.startsAt);
-    } else if (isValueNode(this.startsNode as Element)) {
+    } else if (isValueNode(this.startsNode)) {
       range.setStartBefore(this.startsNode);
     } else {
       const hitStartsNode = searchDescendant(this.startsNode, true);
@@ -60,7 +60,7 @@ export class MatchObject implements IMatchObject {
 
     if (isTextNode(this.endsNode) && Number.isInteger(this.endsAt)) {
       range.setEnd(this.endsNode, this.endsAt);
-    } else if (isValueNode(this.endsNode as Element)) {
+    } else if (isValueNode(this.endsNode)) {
       range.setEndAfter(this.endsNode);
     } else {
       const hitEndsNode = searchDescendant(this.endsNode, false);
@@ -87,7 +87,7 @@ export class MatchObject implements IMatchObject {
         node = range.commonAncestorContainer;
         range.detach(); // Releases the Range from use to improve performance.
       }
-      this._target = getEventElement(node);
+      this._target = getClosestElement(node);
     }
     return this._target;
   }
